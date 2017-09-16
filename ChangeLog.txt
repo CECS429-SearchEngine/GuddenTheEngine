@@ -1,0 +1,6 @@
+9/16/2017:
+- Created JSONSplitter class to convert all-nps-sites.json into separated JSON documents
+- Added all-nps-sites.json into project folder.
+- Added gson library (gson-2.8.1.jar) into Referenced Libraries in project folder.
+-
+
