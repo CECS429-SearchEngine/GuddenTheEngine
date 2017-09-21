@@ -1,5 +1,8 @@
 .DS_Store
+Gudden/jgoodies-*.jar
 .metadata
 Gudden/.classpath
 Gudden/bin/
 Gudden/external/
+.recommenders/
+Gudden/.settings/
