@@ -7,35 +7,61 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Indexer {
-	
-	private HashMap<String, List<PositionalPosting>> mIndex;
-	   
-	   
-	   public Indexer() {
-	      mIndex = new HashMap<String, List<PositionalPosting>>();
-	   }
-	   
-	   public void addTerm(String term, int documentID, int position) {
-	      if(!mIndex.containsKey(term))
-	    	  mIndex.put(term, new ArrayList<PositionalPosting>());
-	      List<PositionalPosting> docList = mIndex.get(term);
-	      if((docList.size()==0) || (docList.get(docList.size()-1).getDocId() < documentID) )
-	    	  mIndex.get(term).add(new PositionalPosting(documentID));
-	      mIndex.get(term).get(mIndex.get(term).size()-1).addPosition(position);
-	   }
-	   
-	   public List<PositionalPosting> getPostings(String term) {
-	      return mIndex.get(term);
-	   }
-	   
-	   public int getTermCount() {
-		  return mIndex.size();
-	   }
-	   
-	   public String[] getDictionary() {
-	      String test[] = mIndex.keySet().toArray(new String[mIndex.size()]);
-		  Arrays.sort(test);
-		   
-	      return test;
-	   }
+
+	private HashMap<String, List<PositionalPosting>> index;
+
+	public Indexer() {
+		this.index = new HashMap<String, List<PositionalPosting>>();
+	}
+
+	public void addPosition(String term, int docId, int position) {
+
+		if (!containsTerm(term))
+			createTerm(term);
+
+		if (!containsDocId(term, docId))
+			addDocId(term, docId);
+
+		PositionalPosting posting = getRecentPosting(getPostings(term));
+		posting.addPosition(position);
+	}
+
+	public List<PositionalPosting> getPostings(String term) {
+		return this.index.get(term);
+	}
+
+	public int getTermCount() {
+		return this.index.size();
+	}
+
+	public String[] getDictionary() {
+		String test[] = index.keySet().toArray(new String[index.size()]);
+		Arrays.sort(test);
+
+		return test;
+	}
+
+	private boolean containsTerm(String term) {
+		return this.index.containsKey(term);
+	}
+
+	private boolean containsDocId(String term, int docId) {
+		List<PositionalPosting> postingsList = getPostings(term);
+		int lastIndex = postingsList.size() - 1;
+		return !postingsList.isEmpty() && postingsList.get(lastIndex).getDocId() >= docId;
+	}
+
+	private void createTerm(String term) {
+		this.index.put(term, new ArrayList<PositionalPosting>());
+	}
+
+	private void addDocId(String term, int docId) {
+		List<PositionalPosting> postingsList = getPostings(term);
+		postingsList.add(new PositionalPosting(docId));
+	}
+
+	private PositionalPosting getRecentPosting(List<PositionalPosting> postingsList) {
+		int lastIndex = postingsList.size() - 1;
+		return postingsList.get(lastIndex);
+	}
 }
