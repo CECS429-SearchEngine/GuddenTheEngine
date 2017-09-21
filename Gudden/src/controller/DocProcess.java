@@ -1,7 +1,8 @@
-package model;
-
+package controller;
 import java.util.ArrayList;
 import java.util.List;
+
+import model.Document;
 
 /**
  * Class for processing documents to build tokens
@@ -18,6 +19,7 @@ public class DocProcess
 	
 	public List<String> process(Document doc) // Replace with Document object 
 	{		
+		Stemmer stem = new Stemmer();
 		ArrayList <String> terms = new ArrayList<String> ();
 
 		String [] vocab = doc.getBody().split(" ");
@@ -41,7 +43,19 @@ public class DocProcess
 					terms.add(word);
 				}	
 			}
-			terms.add(term);
+			
+			for(int i = 0; i < term.length(); i++)
+			{
+				stem.add(term.charAt(i));
+			}
+			stem.stem();
+			String stemmedTerm = "";
+			for(char c : stem.getResultBuffer())
+			{
+				stemmedTerm += c;
+			}
+			
+			terms.add(stemmedTerm);
 		}
 		return terms;
 	}
