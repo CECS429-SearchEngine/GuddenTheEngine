@@ -9,10 +9,10 @@ import model.Document;
  * @author crystalchun
  *
  */
-public class DocProcess 
+public class DocProcessor 
 {
 	
-	public DocProcess()
+	public DocProcessor()
 	{
 		
 	}

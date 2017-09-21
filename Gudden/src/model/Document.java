@@ -9,6 +9,7 @@ public class Document {
 	public String getTitle() {
 		return title;
 	}
+	
 	public void setTitle(String title) {
 		this.title = title;
 	}
@@ -16,6 +17,7 @@ public class Document {
 	public String getBody() {
 		return body;
 	}
+	
 	public void setBody(String body) {
 		this.body = body;
 	}
@@ -23,6 +25,7 @@ public class Document {
 	public String getUrl() {
 		return url;
 	}
+	
 	public void setUrl(String url) {
 		this.url = url;
 	}

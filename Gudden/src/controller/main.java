@@ -21,7 +21,7 @@ public class main
 		proc.process("Hello90!   9");
 		proc.process("Hello90!   9***!!!");
 		proc.process("*&@#$Hello90!@*#$(@");*/
-	}
+	}	
 	
 	
 }
