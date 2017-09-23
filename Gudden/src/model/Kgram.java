@@ -19,7 +19,11 @@ public class Kgram {
 		// First prepare the term to be a k_gram index
 		// Add the dollar signs
 		term = "$" + term + "$";
-		split(term);
+		
+		for(int i = 1; i <= 3; i++)
+		{
+			split(i,term);
+		}
 	}
 	
 	public HashMap<String, List<String>> getKGram()
@@ -27,32 +31,30 @@ public class Kgram {
 		return k_gram;
 	}
 	
-	private void split(String term)
-	{	
+	/**
+	 * Splits the term into grams of k-size, and adds each term into the index.
+	 * @param k The size of the gram
+	 * @param term The term
+	 */
+	private void split(int k, String term)
+	{
 		int i = 0;
 
-// FIX:
 		// Split into grams and add into list then return list
-		while(i < term.length())
+		while(i + k < term.length())
 		{
 			String key = "";
-			for(int j = i; j < i + 3 && j < term.length(); j++)
-			{
-				if(term.charAt(j) != '*')
-				{
-					key += term.charAt(j);
-				}
-				else
-				{
-					break;
-				}
-			}
+			key = term.substring(i, i + k);
 			addKey(key, term);
 			i++;
 		}
-		
 	}
 	
+	/**
+	 * Adds the gram and the term associated with it to the k-gram index.
+	 * @param key The key for this term.
+	 * @param term The term this key maps to.
+	 */
 	private void addKey(String key, String term)
 	{
 		// Then check current k_gram hashmap to see if gram already exists
