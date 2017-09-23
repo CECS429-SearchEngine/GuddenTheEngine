@@ -4,7 +4,7 @@ public class main
 {
 	public static void main(String [] args)
 	{
-		DocProcess proc = new DocProcess();
+		//DocProcess proc = new DocProcess();
 		//proc.process("Hello");
 		/*proc.process("H'e'l'l'o'");
 		proc.process("Hel'lo");
