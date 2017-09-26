@@ -1,5 +1,6 @@
 package model;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,14 +21,14 @@ import com.google.gson.stream.JsonReader;
  *
  */
 public class DocProcessor {
-	String filepath;
+	File file;
 	
-	private Document getDocument(String filepath) {
+	private Document getDocument(File file) {
 		Gson gson = new Gson();
 		JsonObject json = null;
 		
 		try {
-			json = parseToJsonObject(new FileInputStream(filepath));
+			json = parseToJsonObject(new FileInputStream(file));
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
@@ -70,12 +71,13 @@ public class DocProcessor {
 		}
 	}
 	
-	public DocProcessor(String filepath) {
-		this.filepath = filepath;
+	public DocProcessor(File file) {
+		
+		this.file = file;
 	}
 	
-	public List<String> process(String fileName) { // Replace with Document object
-		Document doc = getDocument(this.filepath + "/" + fileName);
+	public List<String> process() { // Replace with Document object
+		Document doc = getDocument(this.file);
 		Scanner sc = new Scanner(doc.getBody());
 		List<String> terms = new ArrayList<String>();
 		while (sc.hasNext()) {
@@ -83,12 +85,5 @@ public class DocProcessor {
 		}
 		normalizeTerms(terms);
 		return terms;
-	}
-	
-	public static void main(String[] args) throws IOException {
-		DocProcessor dp = new DocProcessor("external/articles/");
-		dp.process("article1.json");
-		String filepath = "external/articles/article1.json\nHello how are you.";
-//		System.out.println(doc);
 	}
 }
