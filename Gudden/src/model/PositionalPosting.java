@@ -21,4 +21,36 @@ public class PositionalPosting {
 	public List<Integer> getPositions(){
 		return pos;
 	}
+	
+	@Override
+	public boolean equals(Object other)
+	{
+		boolean equal = true;
+		PositionalPosting post;
+		if(other instanceof PositionalPosting)
+		{
+			post = (PositionalPosting) other;
+
+			if(post.getDocId() == this.docId && this.getPositions().size() == post.getPositions().size())
+			{
+				for(int i = 0;i < this.getPositions().size(); i++)
+				{
+					if(post.getPositions().get(i) != this.getPositions().get(i))
+					{
+						equal = false;
+					}
+				}
+			}
+			else
+			{
+				equal = false;
+			}
+		}
+		else
+		{
+			equal = false;
+		}
+		
+		return equal;
+	}
 }

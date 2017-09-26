@@ -4,7 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class Kgram {
+/**
+ * K-gram index object that holds k-grams and their term mappings.
+ * @author crystalchun
+ *
+ */
+public class Kgram extends Indexer{
 
 	/**All of the k-grams and their mappings to words that match it*/
 	private HashMap <String, List<String>> k_gram;
