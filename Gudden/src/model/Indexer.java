@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class Indexer {
 
@@ -34,9 +36,8 @@ public class Indexer {
 	}
 
 	public String[] getDictionary() {
-		String test[] = index.keySet().toArray(new String[index.size()]);
-		Arrays.sort(test);
-		return test;
+		SortedSet<String> terms = new TreeSet<String>(this.index.keySet());
+		return terms.toArray(new String[terms.size()]);
 	}
 
 	private boolean containsTerm(String term) {
