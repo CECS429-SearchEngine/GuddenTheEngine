@@ -6,37 +6,29 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Query {
-	private ArrayList<String> tokens;
-	private Stemmer stemmer = new Stemmer();
+	private List<String> tokens;
 	
-	public Query() {
+	public Query(String word) {
 		this.tokens = new ArrayList<String>();
+		tokenize(word);
 	}
 	
-	public void query(String word) {
-		tokenize(word);
+	public List<String> getTokens() {
+		return this.tokens;
 	}
 	
 	// sets token to lower case and stems them. 
 	private String normalize(String token) {
-		String normalized = token.replaceAll("\"", "").toLowerCase();
+		String normalized = Normalizer.trimNonAlphanumeric(token).toLowerCase();
 		if (token.contains(" ")) {
 			String[] normalizedTokens = normalized.split("\\s+");
-			StringBuilder sb = new StringBuilder();
-			for (String each : normalizedTokens) {
-				sb.append(stemToken(each));
-				sb.append(" ");
+			for (int i = 0; i < normalizedTokens.length; i++) {
+				normalizedTokens[i] = Normalizer.stemToken(normalizedTokens[i]);
 			}
-			return sb.toString();
+			String normalizedToken = String.join(" ", normalizedTokens);
+			return normalizedToken;
 		}
-		return stemToken(normalized);
-		
-	}
-	
-	private String stemToken(String token) {
-		stemmer.add(token.toCharArray(), token.length());
-		stemmer.stem();
-		return stemmer.toString();
+		return Normalizer.stemToken(normalized);
 	}
 	
 	private void tokenize(String query) {
@@ -52,14 +44,5 @@ public class Query {
 			String token = normalize(m.group(1));
 			this.tokens.add(token);
 		}
-		for (String s : tokens) {
-			System.out.println(s);
-		}
-	}
-	
-	public static void main(String[] args) {
-		Query q = new Query();
-		String token = "shakes               \"Harry         Juice\"";
-		q.query(token);
 	}
 }
