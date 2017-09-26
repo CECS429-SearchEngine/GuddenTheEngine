@@ -75,8 +75,7 @@ public class DocProcessor {
 	}
 	
 	public List<String> process(String fileName) { // Replace with Document object
-		String normalizedToken;
-		Document doc = getDocument(this.filepath + fileName);
+		Document doc = getDocument(this.filepath + "/" + fileName);
 		Scanner sc = new Scanner(doc.getBody());
 		List<String> terms = new ArrayList<String>();
 		while (sc.hasNext()) {

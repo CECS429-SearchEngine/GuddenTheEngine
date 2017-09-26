@@ -3,7 +3,6 @@ package model;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 
 public class Indexer {
@@ -25,7 +24,7 @@ public class Indexer {
 		PositionalPosting posting = getRecentPosting(getPostings(term));
 		posting.addPosition(position);
 	}
-
+	
 	public List<PositionalPosting> getPostings(String term) {
 		return this.index.get(term);
 	}
@@ -37,7 +36,6 @@ public class Indexer {
 	public String[] getDictionary() {
 		String test[] = index.keySet().toArray(new String[index.size()]);
 		Arrays.sort(test);
-
 		return test;
 	}
 
@@ -63,5 +61,41 @@ public class Indexer {
 	private PositionalPosting getRecentPosting(List<PositionalPosting> postingsList) {
 		int lastIndex = postingsList.size() - 1;
 		return postingsList.get(lastIndex);
+	}
+	
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		String[] dictionary = getDictionary();
+		for(int j = 0; j < dictionary.length; j++) {
+			List<PositionalPosting> ppList = getPostings(dictionary[j]);
+			sb.append(dictionary[j] + ":" + "\n");
+			for(PositionalPosting e : ppList) {
+				sb.append("Document ID " + e.getDocId() + ": ");
+				for(int l : e.getPositions())
+					sb.append(l + " ");
+				sb.append("\n");
+			}
+			sb.append("\n");
+		}
+		return sb.toString();
+	}
+	
+	public static void main(String[] args) {
+		Indexer indexer = new Indexer();
+		String[] exDoc = {"the","fox","jumped","over","the","fox"};
+		for(int x = 0; x < exDoc.length; x++) {
+			indexer.addPosition(exDoc[x], 0, x);
+		}
+		String[] dictionary = indexer.getDictionary();
+		for(int j = 0; j < dictionary.length; j++) {
+			List<PositionalPosting> ppList = indexer.getPostings(dictionary[j]);
+			System.out.print(dictionary[j] + " ");
+			for(PositionalPosting e : ppList) {
+				System.out.print(e.getDocId() + " ");
+				for(int l : e.getPositions())
+					System.out.print(l + " ");
+				System.out.println();
+			}
+		}
 	}
 }
