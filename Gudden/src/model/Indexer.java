@@ -64,6 +64,10 @@ public class Indexer {
 		return postingsList.get(lastIndex);
 	}
 	
+	public void resetIndex() {
+		this.index = new HashMap<String, List<PositionalPosting>>();
+	}
+	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		String[] dictionary = getDictionary();
