@@ -45,4 +45,10 @@ public class Query {
 			this.tokens.add(token);
 		}
 	}
+	
+	public static void main(String[] args) {
+		Query q = new Query("\"jamba juice\" shakes");
+		for (String each : q.getTokens())
+			System.out.println(each);
+	}
 }

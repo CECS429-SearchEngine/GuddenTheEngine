@@ -26,16 +26,13 @@ public class SearchEngine {
 		indexDirectory(index, fileNames, "external/articles/test");
 		// System.out.println(index);
 		Scanner sc = new Scanner(System.in);
-
 		// String[] inputQueries = getInput();
 		// List<Query> queries = getQueries(inputQueries);
 		// printQueries(queries);
 		boolean done = false;
 		while (!done) {
-			String[] command = sc.nextLine().split(" ", 2);
-			for (String each : command) {
-				System.out.println(each);
-			}
+			String query = sc.nextLine();
+			String[] command = query.split(" ", 2);
 			switch (command[0].toLowerCase()) {
 				case ":q":
 					done = true;
@@ -52,7 +49,7 @@ public class SearchEngine {
 					displayVocabulary(index);
 					break;
 				default:
-					System.out.println("in deafult");
+					processQuery(query.trim().split("(\\s?\\+\\s?)"));
 					break;
 			}
 		}
@@ -127,9 +124,58 @@ public class SearchEngine {
 		}
 	}
 
-	private static void processQuery(List<Query> queries) {
-		for (Query each : queries) {
+	private static void processQuery(String[] queries, Indexer idxr) {
+		List<Integer> orResult;
+		// Do and for all queries.
+		for (String each : queries) {
+			List<PositionalPosting> andResult = null;
+			Query query = new Query(each);
+			for (String token : query.getTokens()) {
+				if (token.contains(" ")) {
+					// do positional Intersect
+				} else if (andResult != null) {
+					// merge positionalposting and token.
+					
+				} else {
+					andResult = idxr.getPostings(token);
+				}
+			}
 		}
+//		System.out.println(queries.get(0).getTokens());
+	}
+	
+	private static List<PositionalPosting> postionalIntersect(List<PositionalPosting> p1,
+															 List<PositionalPosting> p2,
+															 int k) {
+		List<PositionalPosting> answer = new ArrayList<PositionalPosting>();
+		for (int i = 0, j = 0; i < p1.size() && j < p2.size();) {
+			int p1ID = p1.get(i).getDocId();
+			int p2ID = p2.get(j).getDocId();
+			if (p1ID == p2ID) {
+				List<Integer> positions = new ArrayList<Integer>();
+				List<Integer> pp1 = p1.get(i).getPositions();
+				List<Integer> pp2 = p2.get(j).getPositions();
+				for (int ii = 0, jj = 0; ii < pp1.size() && jj < pp2.size();) {
+					int positionPP1 = pp1.get(ii);
+					int positionPP2 = pp2.get(jj);
+					if (Math.abs(positionPP1 - positionPP2) <= k) {
+						positions.add(positionPP2);
+						jj++;
+					} else if (positionPP2 > positionPP1) {
+						break;
+					}
+					while(!positions.isEmpty() && Math.abs(positions.get(0) - positionPP1) > k)
+						positions.remove(0);
+				}
+				i++;
+				j++;
+			} else if (p1ID < p2ID) {
+				i++;
+			} else {
+				j++;
+			}
+		}
+		return answer;
 	}
 
 	private static List<Query> getQueries(String[] inputQueries) {
