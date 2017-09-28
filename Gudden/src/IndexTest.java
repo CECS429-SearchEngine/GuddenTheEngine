@@ -11,11 +11,16 @@ import model.Document;
 import model.Indexer;
 import model.PositionalPosting;
 
+/**
+ * Tests the positional inverted index
+ * @author crystalchun
+ *
+ */
 public class IndexTest {
 
 	@Test
 	public void test() {
-		
+		//Has the indexer index the document
 		Indexer index = new Indexer();
 		for(int i = 1; i < 6; i++) {
 			DocProcessor docs = new DocProcessor(new File("external/doc" + i + ".json"));
@@ -24,15 +29,19 @@ public class IndexTest {
 				index.addPosition(terms.get(j), i-1, j);
 			}
 		}
-		System.out.println(index);
+		
+		//System.out.println(index);
 		assertEquals(21, index.getTermCount());
+		
 		String [] terms = {"ar","british","dog","enjoi",
 				"enjoy","in","is","known","mani","monument",
 				"on","park","raid","seattl","the","there","wa",
 				"washington","well","wellknown","went"};
-		/*Create positional posting for all terms here*/
+		
 		Indexer handBuilt = new Indexer();
 		fillHandBuilt(handBuilt, terms);
+		
+		// Runs through each term and each positional posting to see if the handbuilt index matches the index
 		for(int i = 0; i < terms.length; i ++) {
 			for(int j = 0; j < handBuilt.getPostings(terms[i]).size(); j++) {
 				System.out.println(terms[i]);
@@ -42,8 +51,13 @@ public class IndexTest {
 			}
 		}
 	}
-	public void fillHandBuilt(Indexer index, String [] terms)
-	{
+	
+	/**
+	 * Fills hand built index with terms by hand
+	 * @param index Hand built index
+	 * @param terms List of terms
+	 */
+	public void fillHandBuilt(Indexer index, String [] terms) {
 		index.addPosition(terms[0], 3, 1); // ar Term, docID, pos
 		index.addPosition(terms[1], 2, 4); // british
 		index.addPosition(terms[2], 3, 3); // dog
