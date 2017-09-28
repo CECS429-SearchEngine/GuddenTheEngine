@@ -7,8 +7,9 @@ import org.junit.Test;
 
 import model.DocProcessor;
 import model.Indexer;
+import model.Kgram;
 
-public class QueryTest {
+public class WildCardTest {
 
 	@Test
 	public void test() {
@@ -27,7 +28,17 @@ public class QueryTest {
 				position++;
 			}
 		}
+		String [] terms = index.getDictionary();
+		Kgram k_gram_index = new Kgram();
+		fillKgram(k_gram_index, terms);
 		
+	}
+	
+	public void fillKgram(Kgram index, String [] terms)
+	{
+		for(String term: terms) {
+			index.add(term);
+		}
 	}
 
 }

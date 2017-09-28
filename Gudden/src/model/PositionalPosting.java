@@ -31,15 +31,13 @@ public class PositionalPosting {
 		{
 			
 			post = (PositionalPosting) other;
-			System.out.println("Here " + post.getDocId());
-
+			
 			if(post.getDocId() == this.docId && this.getPositions().size() == post.getPositions().size())
 			{
 				for(int i = 0; i < this.getPositions().size(); i++)
 				{
 					if(post.getPositions().get(i) != this.getPositions().get(i))
 					{
-						System.out.println("failed");
 						equal = false;
 					}
 				}
