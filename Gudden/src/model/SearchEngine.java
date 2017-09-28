@@ -21,6 +21,7 @@ public class SearchEngine {
 
 		// the flieNames in the directory
 		List<String> fileNames = null;
+		fileNames = new ArrayList <String> ();
 
 		// index initial directory
 		indexDirectory(index, fileNames, "external/articles/test");
@@ -49,7 +50,7 @@ public class SearchEngine {
 					displayVocabulary(index);
 					break;
 				default:
-					processQuery(query.trim().split("(\\s?\\+\\s?)"));
+					processQuery(query.trim().split("(\\s?\\+\\s?)"), index);
 					break;
 			}
 		}
@@ -133,11 +134,34 @@ public class SearchEngine {
 			for (String token : query.getTokens()) {
 				if (token.contains(" ")) {
 					// do positional Intersect
+					
+					String [] tokes = token.split(" ");
+					// If the the phrase query contains more than two terms, continue doing positional intersect with result and next phrase's positional postings
+					if(tokes.length > 2)
+					{
+						andResult = postionalIntersect(idxr.getPostings(tokes[0]), idxr.getPostings(tokes[1]), 1);
+						for(int i = 2; i < tokes.length; i++)
+						{
+							andResult = postionalIntersect(andResult, idxr.getPostings(tokes[i]), 1);
+						}
+					}
+					else
+					{
+						andResult = postionalIntersect(idxr.getPostings(tokes[0]), idxr.getPostings(tokes[1]), 1);
+						
+					}
+					
+					for(PositionalPosting a: andResult)
+					{
+						System.out.println(a.getDocId() + ", ");
+					}
+					
 				} else if (andResult != null) {
 					// merge positionalposting and token.
 					
 				} else {
 					andResult = idxr.getPostings(token);
+					
 				}
 			}
 		}
@@ -166,6 +190,14 @@ public class SearchEngine {
 					}
 					while(!positions.isEmpty() && Math.abs(positions.get(0) - positionPP1) > k)
 						positions.remove(0);
+					
+					PositionalPosting posAnswer = new PositionalPosting(p1ID);
+					for(int pos: positions) {
+						posAnswer.addPosition(pos);
+					}
+					posAnswer.addPosition(positionPP1);
+					answer.add(posAnswer);
+					ii++;
 				}
 				i++;
 				j++;
