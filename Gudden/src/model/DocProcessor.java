@@ -22,7 +22,16 @@ import com.google.gson.stream.JsonReader;
  */
 public class DocProcessor {
 	File file;
+	Scanner sc;
 	
+	public DocProcessor(File file) {
+		this.file = file;
+		sc = new Scanner(process().getBody());
+	}
+	
+	public DocProcessor(String token) {
+		sc = new Scanner(token);
+	}
 	private Document getDocument(File file) {
 		Gson gson = new Gson();
 		JsonObject json = null;
@@ -49,41 +58,43 @@ public class DocProcessor {
 		return token.toLowerCase();
 	}
 	
-	private void populateTerms(String token, List<String> terms) {
+	private void populateTokens(String token, List<String> tokens) {
 		if (token.contains("-")) {
-			Set<String> tokens = Normalizer.splitHypenWords(token);
-			for (String each : tokens) {
-				terms.add(each);
+			Set<String> tokenSet = Normalizer.splitHypenWords(token);
+			for (String each : tokenSet) {
+				tokens.add(each);
 			}
 		} else {
-			terms.add(token);
+			tokens.add(token);
 		}
 	}
 	
-	private void normalizeTerms(List<String> terms) {
+	private void normalizeTokens(List<String> tokens) {
 		String normalizedToken;
-		for (int i = 0; i < terms.size(); i++) {
-			normalizedToken = normalizeToken(terms.get(i));
-			terms.set(i, normalizedToken);
+		for (int i = 0; i < tokens.size(); i++) {
+			normalizedToken = normalizeToken(tokens.get(i));
+			tokens.set(i, normalizedToken);
 			if (normalizedToken.length() == 0) {
-				terms.remove(i--);
+				tokens.remove(i--);
 			}
 		}
 	}
 	
-	public DocProcessor(File file) {
-		
-		this.file = file;
-	}
-	
-	public List<String> process() { // Replace with Document object
+	private Document process() {
 		Document doc = getDocument(this.file);
 		Scanner sc = new Scanner(doc.getBody());
-		List<String> terms = new ArrayList<String>();
-		while (sc.hasNext()) {
-			populateTerms(sc.next(), terms);
-		}
-		normalizeTerms(terms);
-		return terms;
+		return doc;
+	}
+
+	public boolean hasNextToken() {
+		return this.sc.hasNext();
+	}
+	
+	public List<String> nextToken() {
+		if (!hasNextToken()) return null;
+		List<String> tokens = new ArrayList<String>();
+		populateTokens(sc.next(), tokens);	
+		normalizeTokens(tokens);
+		return tokens;
 	}
 }
