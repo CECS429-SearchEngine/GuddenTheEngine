@@ -3,13 +3,14 @@ package model;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Scanner;
 
 /**
  * K-gram index object that holds k-grams and their term mappings.
  * @author crystalchun
  *
  */
-public class Kgram extends Indexer{
+public class Kgram extends Indexer {
 
 	/**All of the k-grams and their mappings to words that match it*/
 	private HashMap <String, List<String>> k_gram;
@@ -19,9 +20,7 @@ public class Kgram extends Indexer{
 	}
 	
 	public void add(String term) {
-		// Add the dollar signs
-		term = "$" + term + "$";
-		
+		term = "$" + term +"$";
 		for(int i = 1; i <= 3; i++) {
 			split(i,term);
 		}
@@ -38,13 +37,16 @@ public class Kgram extends Indexer{
 	 */
 	private void split(int k, String term) {
 		int i = 0;
-
+		
 		// Split into grams and add into list then return list
-		while(i + k < term.length()) {
+		while(i + k <= term.length()) {
 			String key = "";
 			key = term.substring(i, i + k);
 			
-			addKey(key, term);
+			if(!key.equals("$"))
+			{
+				addKey(key, term.substring(1, term.length()-1));
+			}
 			i++;
 		}
 	}
@@ -74,5 +76,42 @@ public class Kgram extends Indexer{
 	
 	public List<String> getTerms(String key) {
 		return k_gram.get(key);
+	}
+	
+	@Override
+	public String toString()
+	{
+		String KGram = "K-Gram Index:\n";
+		for(String gram: k_gram.keySet())
+		{
+			KGram = KGram + gram +": [";
+			for(String term: k_gram.get(gram))
+			{
+				KGram = KGram + term + ", ";
+			}
+			KGram += "\n";
+		}
+		return KGram;
+	}
+	
+	public static void main(String [] args)
+	{
+		Kgram grams = new Kgram();
+		Scanner in = new Scanner(System.in);
+		boolean enter = true;
+		while(enter)
+		{
+			System.out.print("Enter term: ");
+			String term = in.next();
+			if(term.equals("quit"))
+			{
+				enter = false;
+			}
+			else
+			{
+				grams.add(term);
+				System.out.println(grams);
+			}
+		}
 	}
 }
