@@ -32,6 +32,19 @@ public class DocProcessor {
 	public DocProcessor(String token) {
 		sc = new Scanner(token);
 	}
+	
+	public boolean hasNextToken() {
+		return this.sc.hasNext();
+	}
+	
+	public List<String> nextToken() {
+		if (!hasNextToken()) return null;
+		List<String> tokens = new ArrayList<String>();
+		populateTokens(sc.next(), tokens);	
+		normalizeTokens(tokens);
+		return tokens;
+	}
+	
 	private Document getDocument(File file) {
 		Gson gson = new Gson();
 		JsonObject json = null;
@@ -84,17 +97,5 @@ public class DocProcessor {
 		Document doc = getDocument(this.file);
 		Scanner sc = new Scanner(doc.getBody());
 		return doc;
-	}
-
-	public boolean hasNextToken() {
-		return this.sc.hasNext();
-	}
-	
-	public List<String> nextToken() {
-		if (!hasNextToken()) return null;
-		List<String> tokens = new ArrayList<String>();
-		populateTokens(sc.next(), tokens);	
-		normalizeTokens(tokens);
-		return tokens;
 	}
 }
