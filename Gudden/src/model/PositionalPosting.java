@@ -7,53 +7,34 @@ public class PositionalPosting {
 
 	private int docId;
 	private List<Integer> pos = new LinkedList<Integer>();
-	
+
 	public PositionalPosting(int docId) {
 		this.docId = docId;
 	}
-	
-	public int getDocId() { return docId; }
-	
+
+	public int getDocId() {
+		return docId;
+	}
+
 	public void addPosition(int position) {
 		pos.add(position);
 	}
-	
-	public List<Integer> getPositions(){
+
+	public List<Integer> getPositions() {
 		return pos;
 	}
-	
-	@Override
-	public boolean equals(Object other)
-	{
-		boolean equal = true;
-		PositionalPosting post;
-		if(other instanceof PositionalPosting)
-		{
-			
-			post = (PositionalPosting) other;
-			System.out.println("Here " + post.getDocId());
 
-			if(post.getDocId() == this.docId && this.getPositions().size() == post.getPositions().size())
-			{
-				for(int i = 0; i < this.getPositions().size(); i++)
-				{
-					if(post.getPositions().get(i) != this.getPositions().get(i))
-					{
-						System.out.println("failed");
-						equal = false;
-					}
-				}
-			}
-			else
-			{
-				equal = false;
-			}
+	@Override
+	public boolean equals(Object other) {
+		return other instanceof PositionalPosting ? comparePositions((PositionalPosting)other) : false;
+	}
+	
+	private boolean comparePositions(PositionalPosting other) {
+		List<Integer> thisPos = pos, otherPos = other.getPositions();
+		if (other.getPositions().size() != other.getPositions().size()) return false;
+		for (int i = 0; i < otherPos.size(); i++) {
+			if (otherPos.get(i) != thisPos.get(i)) return false;
 		}
-		else
-		{
-			equal = false;
-		}
-		
-		return equal;
+		return true;
 	}
 }
