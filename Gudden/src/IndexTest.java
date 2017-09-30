@@ -1,6 +1,9 @@
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +22,8 @@ import model.PositionalPosting;
 public class IndexTest {
 
 	@Test
-	public void test() {
+	public void testWashingtonTestCorpus() {
+		/*	
 		//Has the indexer index the document
 		Indexer index = new Indexer();
 		for(int i = 1; i < 6; i++) {
@@ -28,6 +32,22 @@ public class IndexTest {
 			for(int j = 0; j < terms.size(); j++) {
 				index.addPosition(terms.get(j), i-1, j);
 			}
+		}
+		*/
+		
+		
+		Indexer index = new Indexer();
+		for(int i = 1; i < 6; i++) {
+			//File file = new File("external/doc" + i + ".json"));
+			File file = new File ("external\\testcorpus\\Crystal\\json\\article"+i+".json");
+			DocProcessor docs = new DocProcessor(file);
+			int position = 0;
+			while(docs.hasNextToken()) {
+				List<String> tokens = docs.nextToken();
+				for(String term : tokens)
+					index.addPosition(term, i-1, position++);
+			}
+
 		}
 		
 		//System.out.println(index);
