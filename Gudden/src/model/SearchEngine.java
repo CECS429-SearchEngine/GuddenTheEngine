@@ -9,22 +9,22 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.SortedSet;
 
 public class SearchEngine {
-
-	public static void main(String[] args) {
+	private static final String NEAR = "(.*near/\\d.*)";
+	
+	public static void main(String[] args) throws IOException {
 		// the positional index
 		Indexer index = new Indexer();
-
 		// the flieNames in the directory
-		List<String> fileNames = null;
-		fileNames = new ArrayList <String> ();
-
+		List<String> fileNames;
+		String filePath = "external/articles/test";
 		// index initial directory
-		indexDirectory(index, fileNames, "external/articles/test");
+		fileNames = indexDirectory(index, filePath);
 		// System.out.println(index);
 		Scanner sc = new Scanner(System.in);
 		// String[] inputQueries = getInput();
@@ -32,28 +32,39 @@ public class SearchEngine {
 		// printQueries(queries);
 		boolean done = false;
 		while (!done) {
-			String query = sc.nextLine();
-			String[] command = query.split(" ", 2);
+			String input = sc.nextLine();
+			String[] command = input.split(" ", 2);
 			switch (command[0].toLowerCase()) {
-				case ":q":
-					done = true;
-					break;
-				case ":stem":
-					stemToken(command[1]);
-					break;
-				case ":index":
-					index.resetIndex();
-					// index the new directory path.
-					indexDirectory(index, fileNames, command[1]);
-					break;
-				case ":vocab":
-					displayVocabulary(index);
-					break;
-				default:
-					processQuery(query.trim().split("(\\s?\\+\\s?)"), index);
-					break;
+			case ":q":
+				done = true;
+				break;
+			case ":stem":
+				stemToken(command[1]);
+				break;
+			case ":index":
+				index.resetIndex();
+				// index the new directory path.
+				fileNames = indexDirectory(index, command[1]);
+				break;
+			case ":vocab":
+				displayVocabulary(index);
+				break;
+			default:
+				List<Query> queries = getQueries(input.trim().split("(\\s*\\+\\s*)"));
+				List<PositionalPosting> result = processQuery(index, queries);
+				for (PositionalPosting p : result) {
+					System.out.println(fileNames.get(p.getDocId()));
+				}
+				break;
 			}
 		}
+	}
+	
+	private static List<PositionalPosting> processQuery(Indexer index, List<Query> queries) {
+		LinkedList<List<PositionalPosting>> subQueryResults = new LinkedList<List<PositionalPosting>>();
+		for (Query each : queries)
+			subQueryResults.add(processSubQuery(index, each));
+		return orResult(subQueryResults);
 	}
 
 	private static void stemToken(String token) {
@@ -62,21 +73,13 @@ public class SearchEngine {
 			System.out.println("Tokens are: " + String.join(", ", dp.nextToken()));
 	}
 
-	private static void indexDirectory(Indexer index, List<String> fileNames, String path) {
-		try {
-			fileNames = processDocuments(index, path);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private static void displayVocabulary(Indexer index) {
 		String[] vocabs = index.getDictionary();
 		System.out.println(String.join("\n", vocabs));
 		System.out.println(vocabs.length);
 	}
 
-	private static List<String> processDocuments(Indexer index, String path) throws IOException {
+	private static List<String> indexDirectory(Indexer index, String path) throws IOException {
 		final Path currentWorkingPath = Paths.get(path).toAbsolutePath();
 
 		// the list of file names that were processed
@@ -125,110 +128,99 @@ public class SearchEngine {
 		}
 	}
 
-	private static void processQuery(String[] queries, Indexer idxr) {
-		List<Integer> orResult;
-		// Do and for all queries.
-		for (String each : queries) {
-			List<PositionalPosting> andResult = null;
-			Query query = new Query(each);
-			for (String token : query.getTokens()) {
-				if (token.contains(" ")) {
-					// do positional Intersect
-					
-					String [] tokes = token.split(" ");
-					// If the the phrase query contains more than two terms, continue doing positional intersect with result and next phrase's positional postings
-					if(tokes.length > 2)
-					{
-						andResult = postionalIntersect(idxr.getPostings(tokes[0]), idxr.getPostings(tokes[1]), 1);
-						for(int i = 2; i < tokes.length; i++)
-						{
-							andResult = postionalIntersect(andResult, idxr.getPostings(tokes[i]), 1);
-						}
-					}
-					else
-					{
-						andResult = postionalIntersect(idxr.getPostings(tokes[0]), idxr.getPostings(tokes[1]), 1);
-						
-					}
-					
-					for(PositionalPosting a: andResult)
-					{
-						System.out.println(a.getDocId() + ", ");
-					}
-					
-				} else if (andResult != null) {
-					// merge positionalposting and token.
-					
-				} else {
-					andResult = idxr.getPostings(token);
-					
-				}
-			}
+	private static List<PositionalPosting> processPhraseQuery(Indexer index, String[] terms) {
+
+		LinkedList<List<PositionalPosting>> result = new LinkedList<List<PositionalPosting>>();
+		
+		// if phrase was "how are you doing" do the following query:
+		//		positionalIntersect(how, are, 1), positionalIntersect(are, you, 1),
+		//		positionalIntersect(you, doing, 1).
+		for (int i = 1; i < terms.length; i++) {
+			List<PositionalPosting> prevPostings = index.getPostings(terms[i - 1]);
+			List<PositionalPosting> currPostings = index.getPostings(terms[i]);
+			result.add(Indexer.positionalIntersect(prevPostings, currPostings, 1));
 		}
-//		System.out.println(queries.get(0).getTokens());
+		return andResults(result);
 	}
 	
-	private static List<PositionalPosting> postionalIntersect(List<PositionalPosting> p1,
-															 List<PositionalPosting> p2,
-															 int k) {
-		List<PositionalPosting> answer = new ArrayList<PositionalPosting>();
-		for (int i = 0, j = 0; i < p1.size() && j < p2.size();) {
-			int p1ID = p1.get(i).getDocId();
-			int p2ID = p2.get(j).getDocId();
-			if (p1ID == p2ID) {
-				List<Integer> positions = new ArrayList<Integer>();
-				List<Integer> pp1 = p1.get(i).getPositions();
-				List<Integer> pp2 = p2.get(j).getPositions();
-				for (int ii = 0, jj = 0; ii < pp1.size() && jj < pp2.size();) {
-					int positionPP1 = pp1.get(ii);
-					int positionPP2 = pp2.get(jj);
-					if (Math.abs(positionPP1 - positionPP2) <= k) {
-						positions.add(positionPP2);
-						jj++;
-					} else if (positionPP2 > positionPP1) {
-						break;
-					}
-					while(!positions.isEmpty() && Math.abs(positions.get(0) - positionPP1) > k)
-						positions.remove(0);
-					
-					PositionalPosting posAnswer = new PositionalPosting(p1ID);
-					for(int pos: positions) {
-						posAnswer.addPosition(pos);
-					}
-					posAnswer.addPosition(positionPP1);
-					answer.add(posAnswer);
-					ii++;
-				}
-				i++;
-				j++;
-			} else if (p1ID < p2ID) {
-				i++;
-			} else {
-				j++;
+	private static List<PositionalPosting> processNearQuery(Indexer index, String[] terms) {
+		int k = Integer.parseInt(terms[1].split("/")[1]);
+		List<PositionalPosting> prevPosting = index.getPostings(terms[0]);
+		List<PositionalPosting> currPosting = index.getPostings(terms[2]);
+		return Indexer.positionalIntersect(prevPosting, currPosting, k);
+	}
+	
+	private static List<PositionalPosting> andResults(LinkedList<List<PositionalPosting>> result) {
+		List<PositionalPosting> andResult = result.poll();
+		while (!result.isEmpty()) {
+			List<PositionalPosting> nextPosting = result.poll();
+			andResult = Indexer.intersect(andResult, nextPosting);
+		}
+		return andResult;
+	}
+	
+	private static List<PositionalPosting> orResult(LinkedList<List<PositionalPosting>> result) {
+		List<PositionalPosting> orResult = result.poll();
+		while(!result.isEmpty()) {
+			List<PositionalPosting> nextPosting = result.poll();
+			orResult = Indexer.union(orResult, nextPosting);
+		}
+		return orResult;
+	}
+	private static List<PositionalPosting> processSubQuery(Indexer index, Query query) {
+		LinkedList<List<PositionalPosting>> result = new LinkedList<List<PositionalPosting>>(); 
+		for (String token : query.getTokens()) {
+			// check for near query
+			if (token.matches(NEAR)) {
+				result.add(processNearQuery(index, token.split("\\s+")));
+			}
+			// check for phrase query
+			else if (token.contains(" ")) {
+				result.add(processPhraseQuery(index, token.split("\\s+")));
+			}
+			// add posting to query.
+			else {
+				result.add(index.getPostings(token));
 			}
 		}
-		return answer;
+		
+		return andResults(result);
 	}
-
-	private static List<Query> getQueries(String[] inputQueries) {
+	
+	private static List<Query> getQueries(String[] queryInputs) {
+		// Query: "hello world" good near/3 bye + good "easy good" + "gooden java" + good
+		// SubQuery1: hello world, good near/3 bye
+		// SubQuery2: good, easi good
+		// SubQuery3: gooden java
+		// SubQuery4: good
+		
 		List<Query> queries = new ArrayList<Query>();
-		for (String each : inputQueries)
-			queries.add(new Query(each));
-		return queries;
-	}
-
-	private static String[] getInput() {
-		Scanner sc = new Scanner(System.in);
-		return sc.nextLine().trim().split("(\\s?\\+\\s?)");
-	}
-
-	private static void printQueries(List<Query> queries) {
-		for (Query x : queries) {
-			System.out.print(x.getTokens().size() + " of tokens in query: ");
-			for (String y : x.getTokens()) {
-				System.out.print(y + ",");
+		for (String queryInput : queryInputs) {
+			if (queryInput.matches(NEAR)) {
+				String[] input = queryInput.split("\\s+");
+				StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < input.length; i++) {
+					if (i < input.length - 1 && input[i + 1].matches(NEAR)) {
+						sb.append(' ');
+						sb.append('"');
+						sb.append(input[i]);
+						sb.append(' ');
+						sb.append(input[++i]);
+						sb.append(' ');
+						sb.append(input[++i]);
+						sb.append('"');
+						sb.append(' ');
+					} else {
+						sb.append(' ');
+						sb.append(input[i]);
+						sb.append(' ');
+					}
+				}
+				queries.add(new Query(sb.toString().trim()));
+			} else {
+				queries.add(new Query(queryInput));
 			}
-			System.out.println();
 		}
+		return queries;
 	}
 }

@@ -17,6 +17,10 @@ public class Query {
 		return this.tokens;
 	}
 	
+	public String toString() {
+		return String.join(", ", tokens);
+	}
+	
 	// sets token to lower case and stems them. 
 	private String normalize(String token) {
 		String normalized = Normalizer.trimNonAlphanumeric(token).toLowerCase();
@@ -46,9 +50,4 @@ public class Query {
 		}
 	}
 	
-	public static void main(String[] args) {
-		Query q = new Query("\"jamba juice\" shakes");
-		for (String each : q.getTokens())
-			System.out.println(each);
-	}
 }
