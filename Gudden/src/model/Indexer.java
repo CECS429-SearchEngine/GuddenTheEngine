@@ -78,7 +78,8 @@ public class Indexer {
 					while (jj < posList2.size()) {
 						postingPositionOne = posList1.get(ii);
 						int postingPositionTwo = posList2.get(jj);
-						if (Math.abs(postingPositionOne - postingPositionTwo) <= k) {
+						int distance = postingPositionTwo - postingPositionOne;
+						if (0 < distance && distance <= k) {
 							positions.add(postingPositionTwo);
 						} else if (postingPositionTwo > postingPositionOne){
 							break;
