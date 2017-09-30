@@ -21,7 +21,7 @@ public class SearchEngine {
 		Indexer index = new Indexer();
 		// the flieNames in the directory
 		List<String> fileNames;
-		String filePath = "external/articles/test";
+		String filePath = args[0];//"external/articles/test";
 		// index initial directory
 		fileNames = indexDirectory(index, filePath);
 		// System.out.println(index);
@@ -57,6 +57,36 @@ public class SearchEngine {
 				break;
 			}
 		}
+	}
+	
+	public static String queryResults(List<String> fileNames, Indexer index, String[] Queries) {
+		String results = "";
+		System.out.println(index.toString());
+		for(String input : Queries) {
+			List<Query> queries = getQueries(input.trim().split("(\\s*\\+\\s*)"));
+			
+			if(queries.size()-1 > 0)
+				System.out.println(queries.get(queries.size()-1));
+			else if(queries.size()-1 == 0)
+				System.out.println(queries.get(0));
+			else
+				System.out.println("NO QUERIES");
+			
+			List<PositionalPosting> result = processQuery(index, queries);
+
+			if(result.size()-1 > 0)
+				System.out.println(result.get(result.size()-1).getDocId());
+			else if(result.size()-1 == 1)
+				System.out.println(result.get(0).getDocId());
+			else
+				System.out.println("NO RESULTS");
+			System.out.println("CHEK");
+			for (PositionalPosting p : result) {
+				results.concat(fileNames.get(p.getDocId()) + "\n");
+			}
+		}
+			
+		return results;
 	}
 	
 	private static List<PositionalPosting> processQuery(Indexer index, List<Query> queries) {
