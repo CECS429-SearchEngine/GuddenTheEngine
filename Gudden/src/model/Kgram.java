@@ -19,8 +19,13 @@ public class Kgram extends Indexer {
 		k_gram = new HashMap<String, List<String>> ();
 	}
 	
+	/**
+	 * Adds the term to the k-gram index
+	 * @param term The term to be added
+	 */
 	public void add(String term) {
 		term = "$" + term +"$";
+		
 		for(int i = 1; i <= 3; i++) {
 			split(i,term);
 		}
@@ -43,8 +48,7 @@ public class Kgram extends Indexer {
 			String key = "";
 			key = term.substring(i, i + k);
 			
-			if(!key.equals("$"))
-			{
+			if(!key.equals("$")) {
 				addKey(key, term.substring(1, term.length()-1));
 			}
 			i++;
@@ -79,36 +83,29 @@ public class Kgram extends Indexer {
 	}
 	
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		String KGram = "K-Gram Index:\n";
-		for(String gram: k_gram.keySet())
-		{
+		for(String gram: k_gram.keySet()) {
 			KGram = KGram + gram +": [";
-			for(String term: k_gram.get(gram))
-			{
+			for(String term: k_gram.get(gram)) {
 				KGram = KGram + term + ", ";
 			}
-			KGram += "\n";
+			KGram += "]\n";
 		}
 		return KGram;
 	}
 	
-	public static void main(String [] args)
-	{
+	public static void main(String [] args) {
 		Kgram grams = new Kgram();
 		Scanner in = new Scanner(System.in);
 		boolean enter = true;
-		while(enter)
-		{
+		while(enter) {
 			System.out.print("Enter term: ");
 			String term = in.next();
-			if(term.equals("quit"))
-			{
+			if(term.equals("quit")) {
 				enter = false;
 			}
-			else
-			{
+			else {
 				grams.add(term);
 				System.out.println(grams);
 			}

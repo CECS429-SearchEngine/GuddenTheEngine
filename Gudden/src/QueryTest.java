@@ -28,6 +28,8 @@ public class QueryTest {
 			}
 		}
 		
+		// Create query and assert they equal the docIds here
+		
 	}
 
 }
