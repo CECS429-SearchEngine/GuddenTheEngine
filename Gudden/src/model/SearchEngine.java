@@ -9,13 +9,12 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 
 public class SearchEngine {
-	private static final String NEAR = "(.*near/\\d.*)";
+	private static final String NEAR_REGEX = "(.*near/\\d.*)";
 	
 	public static void main(String[] args) throws IOException {
 		// the positional index
@@ -171,7 +170,7 @@ public class SearchEngine {
 		LinkedList<List<PositionalPosting>> result = new LinkedList<List<PositionalPosting>>(); 
 		for (String token : query.getTokens()) {
 			// check for near query
-			if (token.matches(NEAR)) {
+			if (token.matches(NEAR_REGEX)) {
 				result.add(processNearQuery(index, token.split("\\s+")));
 			}
 			// check for phrase query
@@ -196,11 +195,11 @@ public class SearchEngine {
 		
 		List<Query> queries = new ArrayList<Query>();
 		for (String queryInput : queryInputs) {
-			if (queryInput.matches(NEAR)) {
+			if (queryInput.matches(NEAR_REGEX)) {
 				String[] input = queryInput.split("\\s+");
 				StringBuilder sb = new StringBuilder();
 				for (int i = 0; i < input.length; i++) {
-					if (i < input.length - 1 && input[i + 1].matches(NEAR)) {
+					if (i < input.length - 1 && input[i + 1].matches(NEAR_REGEX)) {
 						sb.append(' ');
 						sb.append('"');
 						sb.append(input[i]);
