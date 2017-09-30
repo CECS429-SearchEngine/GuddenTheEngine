@@ -15,20 +15,20 @@ public class Indexer {
 		this.index = new HashMap<String, List<PositionalPosting>>();
 	}
 
-	public void addPosition(String term, int docId, int position) {
+	public void addPosition(String token, int docId, int position) {
 
-		if (!containsTerm(term))
-			createTerm(term);
+		if (!containsTerm(token))
+			createTerm(token);
 
-		if (!containsDocId(term, docId))
-			addDocId(term, docId);
+		if (!containsDocId(token, docId))
+			addDocId(token, docId);
 
-		PositionalPosting posting = getRecentPosting(getPostings(term));
+		PositionalPosting posting = getRecentPosting(getPostings(token));
 		posting.addPosition(position);
 	}
 	
-	public List<PositionalPosting> getPostings(String term) {
-		return this.index.get(term);
+	public List<PositionalPosting> getPostings(String token) {
+		return this.index.get(token);
 	}
 
 	public int getTermCount() {
@@ -172,18 +172,10 @@ public class Indexer {
 		return result;
 	}
 
-	private boolean containsTerm(String term) {
-		return this.index.containsKey(term);
-	}
-
 	private boolean containsDocId(String term, int docId) {
 		List<PositionalPosting> postingsList = getPostings(term);
 		int lastIndex = postingsList.size() - 1;
 		return !postingsList.isEmpty() && postingsList.get(lastIndex).getDocId() >= docId;
-	}
-
-	private void createTerm(String term) {
-		this.index.put(term, new ArrayList<PositionalPosting>());
 	}
 
 	private void addDocId(String term, int docId) {
@@ -194,6 +186,14 @@ public class Indexer {
 	private PositionalPosting getRecentPosting(List<PositionalPosting> postingsList) {
 		int lastIndex = postingsList.size() - 1;
 		return postingsList.get(lastIndex);
+	}
+
+	private void createTerm(String term) {
+		this.index.put(term, new ArrayList<PositionalPosting>());
+	}
+
+	private boolean containsTerm(String term) {
+		return this.index.containsKey(term);
 	}
 	
 }
