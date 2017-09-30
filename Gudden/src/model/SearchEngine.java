@@ -21,7 +21,7 @@ public class SearchEngine {
 		Indexer index = new Indexer();
 		// the flieNames in the directory
 		List<String> fileNames;
-		String filePath = "external/articles/test";
+		String filePath = args[0];//"external/articles/test";
 		// index initial directory
 		fileNames = indexDirectory(index, filePath);
 		// System.out.println(index);
@@ -49,14 +49,25 @@ public class SearchEngine {
 				displayVocabulary(index);
 				break;
 			default:
-				List<Query> queries = getQueries(input.trim().split("(\\s*\\+\\s*)"));
-				List<PositionalPosting> result = processQuery(index, queries);
-				for (PositionalPosting p : result) {
-					System.out.println(fileNames.get(p.getDocId()));
-				}
+				List<String> results = queryResults(fileNames, index, input);
+				System.out.printf("files: %s\n", String.join(", ", results));
 				break;
 			}
 		}
+	}
+	
+	public static List<String> queryResults(List<String> fileNames, Indexer index, String input) {
+		
+		ArrayList<String> fileNameResults = new ArrayList<String>();
+		
+		List<Query> queries = createQueries(input.trim().split("(\\s*\\+\\s*)"));
+		List<PositionalPosting> result = processQuery(index, queries);
+		
+		for (PositionalPosting p : result) {
+			fileNameResults.add(fileNames.get(p.getDocId()));
+		}
+		
+		return fileNameResults;
 	}
 	
 	private static List<PositionalPosting> processQuery(Indexer index, List<Query> queries) {
@@ -186,7 +197,7 @@ public class SearchEngine {
 		return andResults(result);
 	}
 	
-	private static List<Query> getQueries(String[] queryInputs) {
+	private static List<Query> createQueries(String[] queryInputs) {
 		// Query: "hello world" good near/3 bye + good "easy good" + "gooden java" + good
 		// SubQuery1: hello world, good near/3 bye
 		// SubQuery2: good, easi good
