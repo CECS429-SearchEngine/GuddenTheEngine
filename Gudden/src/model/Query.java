@@ -23,7 +23,9 @@ public class Query {
 	
 	// sets token to lower case and stems them. 
 	private String normalize(String token) {
-		String normalized = Normalizer.trimNonAlphanumeric(token).toLowerCase();
+		String normalized = (Normalizer
+				             .removeApostrophe(Normalizer.trimNonAlphanumeric(token))
+						     .replaceAll("-",  "").toLowerCase());
 		if (token.contains(" ")) {
 			String[] normalizedTokens = normalized.split("\\s+");
 			for (int i = 0; i < normalizedTokens.length; i++) {
