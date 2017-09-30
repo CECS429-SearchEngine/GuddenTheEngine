@@ -30,6 +30,28 @@ public class JsonDocumentParser {
 		this.filePath = filePath;
 		this.articlePath = articlePath;
 	}
+	
+	public void separateDocuments(String root) throws IOException {
+		if (!pathsAreSet()) {
+			throw new NullPointerException("filePath and articlePath must be set.");
+		}
+		
+		JsonArray documents = parseToObject(createReader(new FileInputStream(this.filePath))).getAsJsonArray(root);
+		Gson gson = new Gson();
+		int counter = 0;
+		for (JsonElement e : documents) {
+			createDocumentJson(counter++, e, gson);
+		}
+	}
+	
+	public void setFilePath(String filePath) {
+		this.filePath = filePath;
+	}
+	
+	public void setArticlePath(String articlePath) {
+		this.articlePath = articlePath;
+	}
+
 
 	private JsonObject parseToObject(JsonReader reader) {
 		JsonParser parser = new JsonParser();
@@ -57,30 +79,4 @@ public class JsonDocumentParser {
 		return this.filePath != null && this.articlePath != null;
 	}
 
-	public void separateDocuments(String root) throws IOException {
-		if (!pathsAreSet()) {
-			throw new NullPointerException("filePath and articlePath must be set.");
-		}
-		
-		JsonArray documents = parseToObject(createReader(new FileInputStream(this.filePath))).getAsJsonArray(root);
-		Gson gson = new Gson();
-		int counter = 0;
-		for (JsonElement e : documents) {
-			createDocumentJson(counter++, e, gson);
-		}
-	}
-	
-	public void setFilePath(String filePath) {
-		this.filePath = filePath;
-	}
-	
-	public void setArticlePath(String articlePath) {
-		this.articlePath = articlePath;
-	}
-
-	public static void main(String[] args) throws IOException {
-		String filepath = "all-nps-sites.json";
-		String articlepath = "articles/article";
-		new JsonDocumentParser(filepath, articlepath).separateDocuments("documents");
-	}
 }
