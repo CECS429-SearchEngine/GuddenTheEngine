@@ -1,6 +1,7 @@
 package model;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -14,10 +15,17 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Scanner;
 
+/**
+ * Main search engine class.
+ */
 public class SearchEngine {
+	/**The regex for a NEAR query*/
 	private static final String NEAR_REGEX = "(.*near/\\d.*)";
+	/**The dictionary for this search engine*/
 	private static final Indexer INDEX = new Indexer();
+	/**The k-gram index*/
 	private static final KGramIndex KGRAM_INDEX = new KGramIndex();
+	/**The string format for printing out the resulting file names*/
 	private static final String RESULT_FORMAT = "Files Matching '%s' are:\n\n%s\n\n";
 	
 	public static void main(String[] args) throws IOException {
@@ -55,13 +63,24 @@ public class SearchEngine {
 				List<String> results = queryResults(fileNames, input);
 				if (results.isEmpty())
 					System.out.println("No files were found.");
-				else
+				else {
 					System.out.printf(RESULT_FORMAT, input, String.join(", ", results));
+					System.out.print("Select the document number you want to see: ");
+					int docNum = getInt(0, results.size()-1, sc);
+					displayFile(results.get(docNum));
+				}
 				break;
 			}
 		}
 	}
 
+	/**
+	 * Processes a phrase query by getting the postings list for each term and 
+	 * running an intersect between all of the lists.
+	 * @param terms The list of terms in the query.
+	 * @param index The index containing our terms and their postings.
+	 * @return The list of PositionalPostings that contains the phrase query.
+	 */
 	public static List<PositionalPosting> processPhraseQuery(String[] terms, Indexer index) {
 
 		LinkedList<List<PositionalPosting>> result = new LinkedList<List<PositionalPosting>>();
@@ -77,6 +96,12 @@ public class SearchEngine {
 		return andPositionalPosting(result);
 	}
 	
+	/**
+	 * Processes a near query
+	 * @param terms The list of terms in the near query.
+	 * @param index This search engine's index.
+	 * @return The list of postings that matches this query.
+	 */
 	public static List<PositionalPosting> processNearQuery(String[] terms, Indexer index) {
 		int k = Integer.parseInt(terms[1].split("/")[1]);
 		List<PositionalPosting> prevPosting = index.getPostings(terms[0]);
@@ -84,6 +109,12 @@ public class SearchEngine {
 		return Indexer.positionalIntersect(prevPosting, currPosting, k);
 	}
 	
+	/**
+	 * Gets the results for a query.
+	 * @param fileNames The names of all the files.
+	 * @param input The query.
+	 * @return The resulting list of file names that satisfy this query.
+	 */
 	public static List<String> queryResults(List<String> fileNames, String input) {
 		
 		ArrayList<String> fileNameResults = new ArrayList<String>();
@@ -96,6 +127,12 @@ public class SearchEngine {
 		return fileNameResults;
 	}
 	
+	/**
+	 * Processes a wildcard query.
+	 * @param grams The list of grams from this query.
+	 * @param kGramIndex The KGram index.
+	 * @return A priority queue of all the terms that match this wildcard query.
+	 */
 	public static PriorityQueue<String> processKGramQuery(String[] grams, KGramIndex kGramIndex) {
 		LinkedList<PriorityQueue<String>> result = new LinkedList<PriorityQueue<String>>();
 		for (String each : grams) {
@@ -116,6 +153,11 @@ public class SearchEngine {
 		return postingsResult;
 	}
 	
+	/**
+	 * Processes queries
+	 * @param queries The list of queries to be processed
+	 * @return The list of PositionalPostings resulting from these queries.
+	 */
 	private static List<PositionalPosting> processQuery(List<Query> queries) {
 		LinkedList<List<PositionalPosting>> subQueryResults = new LinkedList<List<PositionalPosting>>();
 		for (Query each : queries) {
@@ -131,18 +173,31 @@ public class SearchEngine {
 		return orPositionalPosting(subQueryResults);
 	}
 
+	/**
+	 * Stems a token.
+	 * @param token The token to be stemmed.
+	 */
 	private static void stemToken(String token) {
 		DocProcessor dp = new DocProcessor(token);
 		while (dp.hasNextToken())
 			System.out.println("Tokens are: " + String.join(", ", dp.nextToken()));
 	}
 
+	/**
+	 * Displays the vocabulary.
+	 */
 	private static void displayVocabulary() {
 		String[] vocabs = INDEX.getDictionary();
 		System.out.println(String.join("\n", vocabs));
 		System.out.println(vocabs.length);
 	}
 
+	/**
+	 * Indexes all the files in the directory.
+	 * @param path The path of this directory.
+	 * @return The list of file names that were indexed.
+	 * @throws IOException
+	 */
 	private static List<String> indexDirectory(String path) throws IOException {
 		final Path currentWorkingPath = Paths.get(path).toAbsolutePath();
 
@@ -181,6 +236,13 @@ public class SearchEngine {
 		return fileNames;
 	}
 
+	/**
+	 * Indexes a file by walking through a file and tokenizing
+	 * the words and adding them (along with their positions in
+	 * the file) to the INDEX.
+	 * @param file The file to be indexed.
+	 * @param docId The document ID
+	 */
 	private static void indexFile(File file, int docId) {
 		DocProcessor dp = new DocProcessor(file);
 		int position = 0;
@@ -194,6 +256,12 @@ public class SearchEngine {
 		}
 	}
 
+	/**
+	 * Intersects the list of PositionalPostings together.
+	 * @param result The list of the lists of PositonalPostings.
+	 * @return A list of PositionalPostings that is the intersect 
+	 * of all the lists of PositionalPostings.
+	 */
 	private static List<PositionalPosting> andPositionalPosting(LinkedList<List<PositionalPosting>> result) {
 		if (result.peek() == null) return null;
 		List<PositionalPosting> andResult = result.poll();
@@ -205,7 +273,12 @@ public class SearchEngine {
 	}
 	
 	
-	
+	/**
+	 * Unions the list of PositionalPostings together.
+	 * @param result The list of the lists of PositionalPostings.
+	 * @return A list of PositionalPostings that is the union of 
+	 * all the lists of PositionalPostings.
+	 */
 	private static List<PositionalPosting> orPositionalPosting(LinkedList<List<PositionalPosting>> result) {
 		if (result.peek() == null) return null;
 		List<PositionalPosting> orResult = result.poll();
@@ -216,6 +289,11 @@ public class SearchEngine {
 		return orResult;
 	}
 	
+	/**
+	 * Processes a sub query.
+	 * @param tokens The list of tokens.
+	 * @return A list of the list of PositionalPostings within the sub query.
+	 */
 	private static LinkedList<List<PositionalPosting>> processSubQuery(List<String> tokens) {
 		LinkedList<List<PositionalPosting>> result = new LinkedList<List<PositionalPosting>>(); 
 		for (String token : tokens) {
@@ -246,6 +324,11 @@ public class SearchEngine {
 		return result;
 	}
 	
+	/**
+	 * Creates Query objects out of strings and stores them into a list of queries.
+	 * @param queryInputs The list of queries in string format.
+	 * @return The list of queries as Query objects.
+	 */
 	private static List<Query> createQueries(String[] queryInputs) {
 		// Query: "hello world" good near/3 bye + good "easy good" + "gooden java" + good
 		// SubQuery1: hello world, good near/3 bye
@@ -281,5 +364,48 @@ public class SearchEngine {
 			}
 		}
 		return queries;
+	}
+	
+	/**
+	 * Gets the user's integer input within a specified range.
+	 * @param lowerBound The lowest number a user can enter.
+	 * @param upperBound The highest number a user can enter.
+	 * @param in The scanner
+	 * @return The integer a user entered that's within the bounds.
+	 */
+	private static int getInt(int lowerBound, int upperBound, Scanner in) {
+		boolean getInput = true;
+		int num = 0;
+		while(getInput) {
+			if(in.hasNextInt()) {
+				num = in.nextInt();
+				if(num < lowerBound || num > upperBound) {
+					System.out.println("Error, please enter a valid choice.");
+				} else {
+					getInput = false;
+				}
+			} else {
+				System.out.println("Error, please select a number.");
+			}
+		}
+		return num;
+	}
+	
+	/**
+	 * Displays a file's contents to the console.
+	 * @param fileName The name of the file.
+	 */
+	private static void displayFile(String fileName) {
+		System.out.println(fileName);
+		File res = new File(fileName);
+		try {
+			Scanner read = new Scanner(res);
+			while(read.hasNextLine()) {
+				System.out.println(read.nextLine());
+			}
+			read.close();
+		} catch (FileNotFoundException e) {
+			System.out.println("Error, file not found.");
+		}
 	}
 }
