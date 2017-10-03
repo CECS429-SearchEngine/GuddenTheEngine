@@ -11,19 +11,22 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Scanner;
 
 public class SearchEngine {
 	private static final String NEAR_REGEX = "(.*near/\\d.*)";
+	private static final Indexer INDEX = new Indexer();
+	private static final KGramIndex KGRAM_INDEX = new KGramIndex();
+	private static final String RESULT_FORMAT = "Files Matching '%s' are:\n\n%s\n\n";
 	
 	public static void main(String[] args) throws IOException {
 		// the positional index
-		Indexer index = new Indexer();
 		// the flieNames in the directory
 		List<String> fileNames;
 		String filePath = args[0];//"external/articles/test";
 		// index initial directory
-		fileNames = indexDirectory(index, filePath);
+		fileNames = indexDirectory(filePath);
 		// System.out.println(index);
 		Scanner sc = new Scanner(System.in);
 		// String[] inputQueries = getInput();
@@ -31,7 +34,7 @@ public class SearchEngine {
 		// printQueries(queries);
 		boolean done = false;
 		while (!done) {
-			String input = sc.nextLine();
+			String input = sc.nextLine().trim();
 			String[] command = input.split(" ", 2);
 			switch (command[0].toLowerCase()) {
 			case ":q":
@@ -41,40 +44,91 @@ public class SearchEngine {
 				stemToken(command[1]);
 				break;
 			case ":index":
-				index.resetIndex();
+				INDEX.resetIndex();
 				// index the new directory path.
-				fileNames = indexDirectory(index, command[1]);
+				fileNames = indexDirectory(command[1]);
 				break;
 			case ":vocab":
-				displayVocabulary(index);
+				displayVocabulary();
 				break;
 			default:
-				List<String> results = queryResults(fileNames, index, input);
-				System.out.printf("files: %s\n", String.join(", ", results));
+				List<String> results = queryResults(fileNames, input);
+				if (results.isEmpty())
+					System.out.println("No files were found.");
+				else
+					System.out.printf(RESULT_FORMAT, input, String.join(", ", results));
 				break;
 			}
 		}
 	}
+
+	public static List<PositionalPosting> processPhraseQuery(String[] terms, Indexer index) {
+
+		LinkedList<List<PositionalPosting>> result = new LinkedList<List<PositionalPosting>>();
+		
+		// if phrase was "how are you doing" do the following query:
+		//		positionalIntersect(how, are, 1), positionalIntersect(are, you, 1),
+		//		positionalIntersect(you, doing, 1).
+		for (int i = 1; i < terms.length; i++) {
+			List<PositionalPosting> prevPostings = index.getPostings(terms[i - 1]);
+			List<PositionalPosting> currPostings = index.getPostings(terms[i]);
+			result.add(Indexer.positionalIntersect(prevPostings, currPostings, 1));
+		}
+		return andPositionalPosting(result);
+	}
 	
-	public static List<String> queryResults(List<String> fileNames, Indexer index, String input) {
+	public static List<PositionalPosting> processNearQuery(String[] terms, Indexer index) {
+		int k = Integer.parseInt(terms[1].split("/")[1]);
+		List<PositionalPosting> prevPosting = index.getPostings(terms[0]);
+		List<PositionalPosting> currPosting = index.getPostings(terms[2]);
+		return Indexer.positionalIntersect(prevPosting, currPosting, k);
+	}
+	
+	public static List<String> queryResults(List<String> fileNames, String input) {
 		
 		ArrayList<String> fileNameResults = new ArrayList<String>();
 		
 		List<Query> queries = createQueries(input.trim().split("(\\s*\\+\\s*)"));
-		List<PositionalPosting> result = processQuery(index, queries);
-		
-		for (PositionalPosting p : result) {
-			fileNameResults.add(fileNames.get(p.getDocId()));
-		}
-		
+		List<PositionalPosting> result = processQuery(queries);
+		if (result != null)
+			for (PositionalPosting p : result)
+				fileNameResults.add(fileNames.get(p.getDocId()));
 		return fileNameResults;
 	}
 	
-	private static List<PositionalPosting> processQuery(Indexer index, List<Query> queries) {
+	public static PriorityQueue<String> processKGramQuery(String[] grams, KGramIndex kGramIndex) {
+		LinkedList<PriorityQueue<String>> result = new LinkedList<PriorityQueue<String>>();
+		for (String each : grams) {
+			if (!each.equals("$")) {
+				if (each.length() > 3) {
+					List<String> subGrams = kGramIndex.generateKGrams(3, each);
+					result.add(processKGramQuery(subGrams.toArray(new String[subGrams.size()]), kGramIndex));
+				} else {
+					result.add(kGramIndex.getPostings(each));
+				}
+			}
+		}
+		PriorityQueue<String> postingsResult = result.poll();
+		while (!result.isEmpty()) {
+			PriorityQueue<String> otherPostingsResult = result.poll();
+			postingsResult = KGramIndex.intersect(postingsResult, otherPostingsResult);
+		}
+		return postingsResult;
+	}
+	
+	private static List<PositionalPosting> processQuery(List<Query> queries) {
 		LinkedList<List<PositionalPosting>> subQueryResults = new LinkedList<List<PositionalPosting>>();
-		for (Query each : queries)
-			subQueryResults.add(processSubQuery(index, each));
-		return orResult(subQueryResults);
+		for (Query each : queries) {
+			List<String> tokens = each.getTokens();
+			LinkedList<List<PositionalPosting>> results = processSubQuery(each.getTokens());
+			if (tokens.size() > 1) {
+				subQueryResults.add(andPositionalPosting(results));
+			} else {
+				for (List<PositionalPosting> e : results)
+					if (e != null) subQueryResults.add(e);
+			}
+		}
+		return orPositionalPosting(subQueryResults);
 	}
 
 	private static void stemToken(String token) {
@@ -83,13 +137,13 @@ public class SearchEngine {
 			System.out.println("Tokens are: " + String.join(", ", dp.nextToken()));
 	}
 
-	private static void displayVocabulary(Indexer index) {
-		String[] vocabs = index.getDictionary();
+	private static void displayVocabulary() {
+		String[] vocabs = INDEX.getDictionary();
 		System.out.println(String.join("\n", vocabs));
 		System.out.println(vocabs.length);
 	}
 
-	private static List<String> indexDirectory(Indexer index, String path) throws IOException {
+	private static List<String> indexDirectory(String path) throws IOException {
 		final Path currentWorkingPath = Paths.get(path).toAbsolutePath();
 
 		// the list of file names that were processed
@@ -113,7 +167,7 @@ public class SearchEngine {
 					// we have found a .json file; add its name to the fileName list,
 					// then idnex the file and increase the document ID counter.
 					fileNames.add(file.getFileName().toString());
-					indexFile(file.toFile(), index, documentID++);
+					indexFile(file.toFile(), documentID++);
 				}
 				return FileVisitResult.CONTINUE;
 			}
@@ -127,40 +181,21 @@ public class SearchEngine {
 		return fileNames;
 	}
 
-	private static void indexFile(File file, Indexer index, int docId) {
+	private static void indexFile(File file, int docId) {
 		DocProcessor dp = new DocProcessor(file);
 		int position = 0;
 		while (dp.hasNextToken()) {
 			List<String> tokens = dp.nextToken();
-			for (String each : tokens)
-				index.addPosition(each, docId, position);
+			for (String each : tokens) {
+				INDEX.addPosition(each, docId, position);
+				KGRAM_INDEX.addToken(each);
+			}
 			position++;
 		}
 	}
 
-	private static List<PositionalPosting> processPhraseQuery(Indexer index, String[] terms) {
-
-		LinkedList<List<PositionalPosting>> result = new LinkedList<List<PositionalPosting>>();
-		
-		// if phrase was "how are you doing" do the following query:
-		//		positionalIntersect(how, are, 1), positionalIntersect(are, you, 1),
-		//		positionalIntersect(you, doing, 1).
-		for (int i = 1; i < terms.length; i++) {
-			List<PositionalPosting> prevPostings = index.getPostings(terms[i - 1]);
-			List<PositionalPosting> currPostings = index.getPostings(terms[i]);
-			result.add(Indexer.positionalIntersect(prevPostings, currPostings, 1));
-		}
-		return andResults(result);
-	}
-	
-	private static List<PositionalPosting> processNearQuery(Indexer index, String[] terms) {
-		int k = Integer.parseInt(terms[1].split("/")[1]);
-		List<PositionalPosting> prevPosting = index.getPostings(terms[0]);
-		List<PositionalPosting> currPosting = index.getPostings(terms[2]);
-		return Indexer.positionalIntersect(prevPosting, currPosting, k);
-	}
-	
-	private static List<PositionalPosting> andResults(LinkedList<List<PositionalPosting>> result) {
+	private static List<PositionalPosting> andPositionalPosting(LinkedList<List<PositionalPosting>> result) {
+		if (result.peek() == null) return null;
 		List<PositionalPosting> andResult = result.poll();
 		while (!result.isEmpty()) {
 			List<PositionalPosting> nextPosting = result.poll();
@@ -169,7 +204,10 @@ public class SearchEngine {
 		return andResult;
 	}
 	
-	private static List<PositionalPosting> orResult(LinkedList<List<PositionalPosting>> result) {
+	
+	
+	private static List<PositionalPosting> orPositionalPosting(LinkedList<List<PositionalPosting>> result) {
+		if (result.peek() == null) return null;
 		List<PositionalPosting> orResult = result.poll();
 		while(!result.isEmpty()) {
 			List<PositionalPosting> nextPosting = result.poll();
@@ -177,24 +215,35 @@ public class SearchEngine {
 		}
 		return orResult;
 	}
-	private static List<PositionalPosting> processSubQuery(Indexer index, Query query) {
+	
+	private static LinkedList<List<PositionalPosting>> processSubQuery(List<String> tokens) {
 		LinkedList<List<PositionalPosting>> result = new LinkedList<List<PositionalPosting>>(); 
-		for (String token : query.getTokens()) {
+		for (String token : tokens) {
 			// check for near query
 			if (token.matches(NEAR_REGEX)) {
-				result.add(processNearQuery(index, token.split("\\s+")));
+				result.add(processNearQuery(token.split("\\s+"), INDEX));
+			}
+			// check for kgram query
+			else if (token.contains("*")) {
+				List<String> subTokens;
+				String[] grams = KGramIndex.encapsulateToken(token).split("\\*");
+				String originalQuery = String.join(".*", grams).replaceAll("\\$", "");
+				PriorityQueue<String> kGramResult = processKGramQuery(grams, KGRAM_INDEX);
+				if (kGramResult != null) {
+					subTokens = KGramIndex.postFilter(kGramResult, originalQuery);
+					result.addAll(processSubQuery(subTokens));
+				}
 			}
 			// check for phrase query
 			else if (token.contains(" ")) {
-				result.add(processPhraseQuery(index, token.split("\\s+")));
+				result.add(processPhraseQuery(token.split("\\s+"), INDEX));
 			}
 			// add posting to query.
 			else {
-				result.add(index.getPostings(token));
+				result.add(INDEX.getPostings(token));
 			}
 		}
-		
-		return andResults(result);
+		return result;
 	}
 	
 	private static List<Query> createQueries(String[] queryInputs) {
@@ -206,9 +255,9 @@ public class SearchEngine {
 		
 		List<Query> queries = new ArrayList<Query>();
 		for (String queryInput : queryInputs) {
+			StringBuilder sb = new StringBuilder();
 			if (queryInput.matches(NEAR_REGEX)) {
 				String[] input = queryInput.split("\\s+");
-				StringBuilder sb = new StringBuilder();
 				for (int i = 0; i < input.length; i++) {
 					if (i < input.length - 1 && input[i + 1].matches(NEAR_REGEX)) {
 						sb.append(' ');

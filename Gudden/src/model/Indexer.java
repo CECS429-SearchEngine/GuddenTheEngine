@@ -15,20 +15,20 @@ public class Indexer {
 		this.index = new HashMap<String, List<PositionalPosting>>();
 	}
 
-	public void addPosition(String term, int docId, int position) {
+	public void addPosition(String token, int docId, int position) {
 
-		if (!containsTerm(term))
-			createTerm(term);
+		if (!containsTerm(token))
+			createTerm(token);
 
-		if (!containsDocId(term, docId))
-			addDocId(term, docId);
+		if (!containsDocId(token, docId))
+			addDocId(token, docId);
 
-		PositionalPosting posting = getRecentPosting(getPostings(term));
+		PositionalPosting posting = getRecentPosting(getPostings(token));
 		posting.addPosition(position);
 	}
 	
-	public List<PositionalPosting> getPostings(String term) {
-		return this.index.get(term);
+	public List<PositionalPosting> getPostings(String token) {
+		return this.index.get(token);
 	}
 
 	public int getTermCount() {
@@ -63,6 +63,7 @@ public class Indexer {
 	
 	public static List<PositionalPosting> positionalIntersect(List<PositionalPosting> p1, List<PositionalPosting> p2,
 			int k) {
+		if (p1 == null || p2 == null) return null;
 		List<PositionalPosting> result = new ArrayList<PositionalPosting>();
 		int i = 0, j = 0;
 		while(i < p1.size() && j < p2.size()) {
@@ -78,7 +79,8 @@ public class Indexer {
 					while (jj < posList2.size()) {
 						postingPositionOne = posList1.get(ii);
 						int postingPositionTwo = posList2.get(jj);
-						if (Math.abs(postingPositionOne - postingPositionTwo) <= k) {
+						int distance = postingPositionTwo - postingPositionOne;
+						if (0 < distance && distance <= k) {
 							positions.add(postingPositionTwo);
 						} else if (postingPositionTwo > postingPositionOne){
 							break;
@@ -111,6 +113,7 @@ public class Indexer {
 	}
 
 	public static List<PositionalPosting> intersect(List<PositionalPosting> p1, List<PositionalPosting> p2) {
+		if (p1 == null || p2 == null) return null;
 		List<PositionalPosting> result = new ArrayList<PositionalPosting>();
 		for (int i = 0, j = 0; i < p1.size() && j < p2.size();) {
 			int p1ID = p1.get(i).getDocId();
@@ -130,8 +133,10 @@ public class Indexer {
 	
 	public static List<PositionalPosting> union(List<PositionalPosting> p1, List<PositionalPosting> p2) {
 		List<PositionalPosting> result = new ArrayList<PositionalPosting>();
+		int p1Size = p1 == null ? 0 : p1.size();
+		int p2Size = p2 == null ? 0 : p2.size();
 		int i, j;
-		for (i = 0, j = 0; i < p1.size() && j < p2.size();) {
+		for (i = 0, j = 0; i < p1Size && j < p2Size;) {
 			int p1ID = p1.get(i).getDocId();
 			int p2ID = p2.get(j).getDocId();
 			if (p1ID == p2ID) {
@@ -147,17 +152,18 @@ public class Indexer {
 				i++;
 			}
 		}
-		while (i < p1.size()) {
+		while (i < p1Size) {
 			int p1ID = p1.get(i++).getDocId();
 			result.add(new PositionalPosting(p1ID));
 		}
-		while (j < p2.size()) {
+		while (j < p2Size) {
 			int p2ID = p2.get(j++).getDocId();
 			result.add(new PositionalPosting(p2ID));
 			
 		}
 		List<PositionalPosting> andResult = intersect(p1, p2);
-		for (i = 0, j = 0; i < andResult.size();) {
+		int intersectSize = andResult == null ? 0 : andResult.size();
+		for (i = 0, j = 0; i < intersectSize;) {
 			int p1ID = andResult.get(i).getDocId();
 			int p2ID = result.get(j).getDocId();
 			if (p1ID == p2ID) {
@@ -172,18 +178,10 @@ public class Indexer {
 		return result;
 	}
 
-	private boolean containsTerm(String term) {
-		return this.index.containsKey(term);
-	}
-
 	private boolean containsDocId(String term, int docId) {
 		List<PositionalPosting> postingsList = getPostings(term);
 		int lastIndex = postingsList.size() - 1;
 		return !postingsList.isEmpty() && postingsList.get(lastIndex).getDocId() >= docId;
-	}
-
-	private void createTerm(String term) {
-		this.index.put(term, new ArrayList<PositionalPosting>());
 	}
 
 	private void addDocId(String term, int docId) {
@@ -194,6 +192,14 @@ public class Indexer {
 	private PositionalPosting getRecentPosting(List<PositionalPosting> postingsList) {
 		int lastIndex = postingsList.size() - 1;
 		return postingsList.get(lastIndex);
+	}
+
+	private void createTerm(String term) {
+		this.index.put(term, new ArrayList<PositionalPosting>());
+	}
+
+	private boolean containsTerm(String term) {
+		return this.index.containsKey(term);
 	}
 	
 }

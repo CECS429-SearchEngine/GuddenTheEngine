@@ -32,12 +32,4 @@ public class Normalizer {
 		return stemmer.toString();
 	}
 	
-	public static void main(String[] args) {
-		System.out.println(trimNonAlphanumeric("\"Explore This Park    Learn About the Park     Photos \\u0026 Multimedia     Photo Gallery              Photo Gallery                       Historic Portraits   4 Photos  Photographs of prominent men and women of the Sand Creek Massacre and associated events.          Science in the Park   4 Photos  Scientists and the National Park Service conducted research to learn more about the Sand Creek Massacre and the landscape before the park opened in 2007.          Sand Creek Massacre NHS Brochure Gallery   2 Photos  Sand Creek Massacre National Historic Site Brochures in .jpg format for easier viewing.            Nature - Plants and Animals   2 Photos  Select images of the plants and animals that inhabit the park.\""));
-		System.out.println(trimNonAlphanumeric(" '    \"They're\""));
-		Set<String> ts = splitHypenWords("Hewlett-Packard");
-		for (String each : ts) {
-			System.out.println(each);
-		}
-	}
 }

@@ -33,6 +33,12 @@ public class Query {
 			}
 			String normalizedToken = String.join(" ", normalizedTokens);
 			return normalizedToken;
+		} 
+		if (token.charAt(token.length() - 1) == '*') {
+			normalized += '*';
+		}
+		if (token.charAt(0) == '*') {
+			normalized = '*' + normalized;
 		}
 		return Normalizer.stemToken(normalized);
 	}
