@@ -11,10 +11,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import model.DocProcessor;
 import model.Indexer;
+import model.PositionalPosting;
 import model.SearchEngine;
 
 public class SearchEngineTest {
@@ -33,17 +35,159 @@ public class SearchEngineTest {
 	  
 	 */
 	
-	String path1 = "external\\testcorpus\\Andrew\\json\\";
-	Indexer index1 = new Indexer();
-	List<String> fileList1 = indexDirectory(index1, path1);
-	List<String> pathList1 = pathList(path1, fileList1);
+	final String path1 = "external\\testcorpus\\Andrew\\json\\";
+	List<String> fileList1;
 	
-	String path2 = "external\\testcorpus\\Crystal\\json\\";
-	Indexer index2 = new Indexer();
-	List<String> fileList2 = indexDirectory(index2, path2);
-	List<String> pathList2 = pathList(path2, fileList2);
+	////////////////////////////////////////////////////////////////////////////////////
+	
+	
+	@Before
+	public void setup() throws IOException{
+		SearchEngine.indexDirectory(path1);
+		fileList1 = fileList(path1);
+	}
+	
+	@Test
+	public void testLiteralQuery1() throws IOException {
+		String queries = "a fishbone";
+		SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		
+		assertEquals(fileList1.get(1), results.get(0));
+	}
+	
+	@Test
+	public void testLiteralQuery2() throws IOException {
+		String queries = "dog";
+		//SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(0), results.get(0));
+		assertEquals(fileList1.get(2), results.get(1));
+		assertEquals(fileList1.get(3), results.get(2));
+	}
+	
+	@Test
+	public void testLiteralQuery3() throws IOException {
+		String queries = "the fox jumps";
+		//SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(0), results.get(0));
+	}
+	
+	@Test
+	public void testLiteralORQuery1() throws IOException {
+		String queries = "fox + lives";
+		//SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(0), results.get(0));
+		assertEquals(fileList1.get(1), results.get(1));
+		assertEquals(fileList1.get(3), results.get(2));
+	}
+	
+	@Test
+	public void testLiteralORQuery2() throws IOException {
+		String queries = "in + over";
+		//SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(0), results.get(0));
+		assertEquals(fileList1.get(1), results.get(1));
+	}
+	
+	@Test
+	public void testLiteralORQuery3() throws IOException {
+		String queries = "with + fox jumps";
+		//SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(0), results.get(0));
+		assertEquals(fileList1.get(2), results.get(1));
+	}
+	
+	@Test
+	public void testPhrase1() throws IOException {
+		String queries = "\"the fox jumps\"";
+		//SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(0, results.size());
+	}
+	
+	@Test
+	public void testPhrase2() throws IOException {
+		String queries = "\"a fishbone\"";
+		//SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(1), results.get(0));
+	}
+	
+	@Test
+	public void testPhrase3() throws IOException {
+		String queries = "\"catdog is a catdog\"";
+		//SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(1), results.get(0));
+	}
 
+	@Test
+	public void testORPhrase1() throws IOException {
+		String queries = "\"the dog digs the\" + \"with the dog\"";
+		//SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(2), results.get(0));
+		assertEquals(fileList1.get(3), results.get(1));
+	}
 	
+	@Test
+	public void testORPhrase2() throws IOException {
+		String queries = "\"the dog\" + \"the fox\"";
+		//System.out.println(SearchEngine.indexDirectory(path1));
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(0), results.get(0));
+		assertEquals(fileList1.get(2), results.get(1));
+		assertEquals(fileList1.get(3), results.get(2));
+	}
+	
+	@Test
+	public void testORPhrase3() throws IOException {
+		String queries = "\"the dog jump over\" + \"the dog\" \"cat plays\" ";
+		//SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(0), results.get(0));
+		assertEquals(fileList1.get(2), results.get(1));
+	}
+	
+	@Test
+	public void testORPhrase4() throws IOException {
+		String queries = "the dog + \"cat plays\" + a \"the fox\"";
+		//SearchEngine.indexDirectory(path1);
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(0), results.get(0));
+		assertEquals(fileList1.get(2), results.get(1));
+	}
+	
+	@Test
+	public void testWildCard1() throws IOException{
+		String queries = "c*t";
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(2), results.get(0));
+	}
+	
+	@Test
+	public void testWildCard2() throws IOException{
+		String queries = "c*t*";
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(1), results.get(0));
+	}
+	
+	@Test
+	public void testWildCard3() throws IOException{
+		String queries = "d*g";
+		List<String> results = SearchEngine.queryResults(fileList1, queries);
+		assertEquals(fileList1.get(0), results.get(0));
+		assertEquals(fileList1.get(2), results.get(1));
+		assertEquals(fileList1.get(3), results.get(2));
+	}
+	
+///////////////////////////////////////////////////////////////////////////////////////////
+
 	private List<String> pathList(String folderPath, List<String> files) {
 		List<String> fileNames = new ArrayList<String>();
 		for(String file : files) 
@@ -51,7 +195,7 @@ public class SearchEngineTest {
 		return fileNames;
 	}
 	
-	private static List<String> indexDirectory(Indexer index, String path){
+	private static List<String> fileList(String path){
 		final Path currentWorkingPath = Paths.get(path).toAbsolutePath();
 
 		// the list of file names that were processed
@@ -76,7 +220,6 @@ public class SearchEngineTest {
 					// we have found a .json file; add its name to the fileName list,
 					// then idnex the file and increase the document ID counter.
 					fileNames.add(file.getFileName().toString());
-					indexFile(file.toFile(), index, documentID++);
 				}
 				return FileVisitResult.CONTINUE;
 			}
@@ -106,152 +249,4 @@ public class SearchEngineTest {
 		System.out.printf("files: %s\n", String.join(", ", results));
 	}
 
-	
-	
-	////////////////////////////////////////////////////////////////////////////////////
-	
-	
-	
-	@Test
-	public void testLiteralQuery1() throws IOException {
-		String queries = "a fishbone";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(1));
-	}
-	
-	@Test
-	public void testLiteralQuery2() throws IOException {
-		String query = "dog";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, query);
-		assertEquals(results.get(0), fileList1.get(0));
-		assertEquals(results.get(1), fileList1.get(2));
-		assertEquals(results.get(2), fileList1.get(3));
-	}
-	
-	@Test
-	public void testLiteralQuery3() throws IOException {
-		String queries = "the fox jumps";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(0));
-	}
-	
-	@Test
-	public void testLiteralORQuery1() throws IOException {
-		String queries = "fox + lives";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(0));
-		assertEquals(results.get(1), fileList1.get(1));
-		assertEquals(results.get(2), fileList1.get(3));
-	}
-	
-	@Test
-	public void testLiteralORQuery2() throws IOException {
-		String queries = "in + over";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(0));
-		assertEquals(results.get(1), fileList1.get(1));
-	}
-	
-	@Test
-	public void testLiteralORQuery3() throws IOException {
-		String queries = "with + fox jumps";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(0));
-		assertEquals(results.get(1), fileList1.get(2));
-	}
-	
-	@Test
-	public void testPhrase1() throws IOException {
-		String queries = "\"the fox jumps\"";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.size(), 0);
-	}
-	
-	@Test
-	public void testPhrase2() throws IOException {
-		String queries = "\"a fishbone\"";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(1));
-	}
-	
-	@Test
-	public void testPhrase3() throws IOException {
-		String queries = "\"catdog is a catdog\"";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(1));
-	}
-	
-	@Test
-	public void testPhrase4() throws IOException {
-		String queries = "\"Washington Monument\"";
-		List<String> results = SearchEngine.queryResults(fileList2,index2, queries);
-		assertEquals(results.get(0), fileList2.get(1));
-	}
-	
-	@Test
-	public void testPhrase5() throws IOException {
-		String queries = "\"Washington Seattle\"";
-		List<String> results = SearchEngine.queryResults(fileList2,index2, queries);
-		printResults(results);
-		assertEquals(results.size(), 0);
-	}
-	
-	@Test
-	public void testPhrase6() throws IOException {
-		String queries = "\"Dogs enjoy the\"";
-		List<String> results = SearchEngine.queryResults(fileList2,index2, queries);
-		assertEquals(results.get(0), fileList2.get(4));
-	}
-	
-	@Test
-	public void testORPhrase1() throws IOException {
-		String queries = "\"the dog digs the\" + \"with the dog\"";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(2));
-		assertEquals(results.get(1), fileList1.get(3));
-	}
-	
-	@Test
-	public void testORPhrase2() throws IOException {
-		String queries = "\"the dog\" + \"the fox\"";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(0));
-		assertEquals(results.get(1), fileList1.get(2));
-		assertEquals(results.get(2), fileList1.get(3));
-	}
-	
-	@Test
-	public void testORPhrase3() throws IOException {
-		String queries = "\"the dog jump over\" + \"catdog is a catdog\" + \"cat plays\" ";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(0));
-		assertEquals(results.get(1), fileList1.get(1));
-		assertEquals(results.get(2), fileList1.get(2));
-	}
-	
-	@Test
-	public void testORPhrase4() throws IOException {
-		String queries = "\"the dog jump over\" + \"the dog\" \"cat plays\" ";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(0));
-		assertEquals(results.get(1), fileList1.get(2));
-	}
-	
-	@Test
-	public void testORPhrase5() throws IOException {
-		String queries = "the \"jump over\" + \"catdog is a catdog\" + \"cat plays\" with ";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(0));
-		assertEquals(results.get(1), fileList1.get(1));
-		assertEquals(results.get(2), fileList1.get(2));
-	}
-	
-	@Test
-	public void testORPhrase6() throws IOException {
-		String queries = "the dog + \"cat plays\" + a \"the fox\"";
-		List<String> results = SearchEngine.queryResults(fileList1,index1, queries);
-		assertEquals(results.get(0), fileList1.get(0));
-		assertEquals(results.get(1), fileList1.get(2));
-	}
-	
 }
