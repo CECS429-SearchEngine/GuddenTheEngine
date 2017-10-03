@@ -67,7 +67,7 @@ public class SearchEngine {
 					System.out.printf(RESULT_FORMAT, input, String.join(", ", results));
 					System.out.print("Select the document number you want to see: ");
 					int docNum = getInt(0, results.size()-1, sc);
-					displayFile(results.get(docNum));
+					displayFile(filePath, results.get(docNum));
 				}
 				break;
 			}
@@ -393,19 +393,16 @@ public class SearchEngine {
 	
 	/**
 	 * Displays a file's contents to the console.
-	 * @param fileName The name of the file.
+	 * @param filePath The path to the file directory.
+	 * @param articlePath The path to your article.
 	 */
-	private static void displayFile(String fileName) {
-		System.out.println(fileName);
-		File res = new File(fileName);
+	private static void displayFile(String filePath, String articlePath) {
+		JsonDocumentParser parser = new JsonDocumentParser(filePath, articlePath);
 		try {
-			Scanner read = new Scanner(res);
-			while(read.hasNextLine()) {
-				System.out.println(read.nextLine());
-			}
-			read.close();
-		} catch (FileNotFoundException e) {
-			System.out.println("Error, file not found.");
-		}
+			Document doc = parser.getDocument();
+			System.out.println("Title: " + doc.getTitle() + "\n" + doc.getBody());
+		} catch (IOException e) {
+			System.out.println("Error, something went wrong with retrieving the document.");
+		}	
 	}
 }
