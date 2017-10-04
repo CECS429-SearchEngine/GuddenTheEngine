@@ -97,9 +97,17 @@ public class SearchEngine {
 		// positionalIntersect(how, are, 1), positionalIntersect(are, you, 1),
 		// positionalIntersect(you, doing, 1).
 		for (int i = 1; i < terms.length; i++) {
-			List<PositionalPosting> prevPostings = index.getPostings(terms[i - 1]);
+			List<PositionalPosting> prevPostings;
+			if(result.size() < 1)
+			{
+				prevPostings = index.getPostings(terms[i - 1]);
+			}
+			else
+			{
+				prevPostings = result.get(0);
+			}
 			List<PositionalPosting> currPostings = index.getPostings(terms[i]);
-			result.add(Indexer.positionalIntersect(prevPostings, currPostings, 1));
+			result.add(0, Indexer.positionalIntersect(prevPostings, currPostings, 1));
 		}
 		return andPositionalPosting(result);
 	}
