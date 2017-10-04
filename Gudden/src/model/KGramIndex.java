@@ -1,10 +1,11 @@
 package model;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -18,15 +19,20 @@ public class KGramIndex {
 
 	/** All of the k-grams and their mappings to words that match it */
 	private HashMap<String, PriorityQueue<String>> index;
-
+	private Set<String> gramDictionary;
+	
 	public KGramIndex() {
 		this.index = new HashMap<String, PriorityQueue<String>>();
+		this.gramDictionary = new HashSet<String>();
 	}
 
 	public void addToken(String token) {
-		String specialToken = encapsulateToken(token);
-		for (int k = 1; k <= 3; k++) {
-			addKGrams(k, specialToken);
+		if (!this.gramDictionary.contains(token)) {
+			String specialToken = encapsulateToken(token);
+			for (int k = 1; k <= 3; k++) {
+					addKGrams(k, specialToken);
+					this.gramDictionary.add(token);
+			}
 		}
 	}
 
@@ -50,18 +56,6 @@ public class KGramIndex {
 			grams.add(kGram);
 		}
 		return grams;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		for (String gram : getGrams()) {
-			sb.append(gram);
-			sb.append(" --> ");
-			sb.append(String.join(" --> ", getPostings(gram)));
-			sb.append("\n");
-		}
-		return sb.toString();
 	}
 
 	public static PriorityQueue<String> intersect(PriorityQueue<String> p1, PriorityQueue<String> p2) {
