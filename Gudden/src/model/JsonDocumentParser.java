@@ -72,7 +72,7 @@ public class JsonDocumentParser {
 	 * @throws IOException
 	 */
 	public Document getDocument() throws IOException {
-		JsonObject documents = parseToObject(createReader(new FileInputStream(this.filePath + this.articlePath)));
+		JsonObject documents = parseToObject(createReader(new FileInputStream(this.filePath + "/" + this.articlePath)));
 		Gson gson = new Gson();
 		Document doc = gson.fromJson(documents, Document.class);
 		return doc;
