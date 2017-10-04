@@ -31,15 +31,15 @@ public class SearchEngine {
 	public static void main(String[] args) throws IOException {
 		// the flieNames in the directory
 		List<String> fileNames;
-		
+
 		// "external/articles/test";
 		String filePath = args[0];
-		
+
 		// index initial directory
 		fileNames = indexDirectory(filePath);
+		System.out.println(KGRAM_INDEX.size());
 		System.out.println("Done Indexing");
-		
-		
+
 		Scanner sc = new Scanner(System.in);
 		boolean done = false;
 		while (!done) {
@@ -71,7 +71,7 @@ public class SearchEngine {
 					System.out.printf("Number of Documents: %d\n\n", results.size());
 					System.out.print("Select the document number you want to see: ");
 					int docNum = getInt(0, results.size() - 1);
-					if (docNum != -1) 
+					if (docNum != -1)
 						displayFile(filePath, results.get(docNum));
 				}
 				break;
@@ -98,12 +98,9 @@ public class SearchEngine {
 		// positionalIntersect(you, doing, 1).
 		for (int i = 1; i < terms.length; i++) {
 			List<PositionalPosting> prevPostings;
-			if(result.size() < 1)
-			{
+			if (result.size() < 1) {
 				prevPostings = index.getPostings(terms[i - 1]);
-			}
-			else
-			{
+			} else {
 				prevPostings = result.get(0);
 			}
 			List<PositionalPosting> currPostings = index.getPostings(terms[i]);
@@ -177,7 +174,7 @@ public class SearchEngine {
 		}
 		return postingsResult;
 	}
-	
+
 	private static void printMenu() {
 		System.out.print(":q to quit\n:stem string\n:index 'new path'\n:vocab\nPlease Enter Query: ");
 	}

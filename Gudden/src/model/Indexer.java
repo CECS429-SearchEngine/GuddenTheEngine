@@ -26,7 +26,7 @@ public class Indexer {
 		PositionalPosting posting = getRecentPosting(getPostings(token));
 		posting.addPosition(position);
 	}
-	
+
 	public List<PositionalPosting> getPostings(String token) {
 		return this.index.get(token);
 	}
@@ -39,20 +39,20 @@ public class Indexer {
 		SortedSet<String> terms = new TreeSet<String>(this.index.keySet());
 		return terms.toArray(new String[terms.size()]);
 	}
-	
+
 	public void resetIndex() {
 		this.index = new HashMap<String, List<PositionalPosting>>();
 	}
-	
+
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		String[] dictionary = getDictionary();
-		for(int j = 0; j < dictionary.length; j++) {
+		for (int j = 0; j < dictionary.length; j++) {
 			List<PositionalPosting> ppList = getPostings(dictionary[j]);
 			sb.append(dictionary[j] + ":" + "\n");
-			for(PositionalPosting e : ppList) {
+			for (PositionalPosting e : ppList) {
 				sb.append("Document ID " + e.getDocId() + ": ");
-				for(int l : e.getPositions())
+				for (int l : e.getPositions())
 					sb.append(l + " ");
 				sb.append("\n");
 			}
@@ -60,13 +60,14 @@ public class Indexer {
 		}
 		return sb.toString();
 	}
-	
+
 	public static List<PositionalPosting> positionalIntersect(List<PositionalPosting> p1, List<PositionalPosting> p2,
 			int k) {
-		if (p1 == null || p2 == null) return null;
+		if (p1 == null || p2 == null)
+			return null;
 		List<PositionalPosting> result = new ArrayList<PositionalPosting>();
 		int i = 0, j = 0;
-		while(i < p1.size() && j < p2.size()) {
+		while (i < p1.size() && j < p2.size()) {
 			int p1ID = p1.get(i).getDocId();
 			int p2ID = p2.get(j).getDocId();
 			if (p1ID == p2ID) {
@@ -82,15 +83,15 @@ public class Indexer {
 						int distance = postingPositionTwo - postingPositionOne;
 						if (0 < distance && distance <= k) {
 							positions.add(postingPositionTwo);
-						} else if (postingPositionTwo > postingPositionOne){
+						} else if (postingPositionTwo > postingPositionOne) {
 							break;
 						}
 						jj++;
 					}
-					
+
 					while (!positions.isEmpty() && Math.abs(positions.get(0) - postingPositionOne) > k)
 						positions.remove(0);
-					
+
 					if (!positions.isEmpty()) {
 						PositionalPosting posAnswer = new PositionalPosting(p1ID);
 						posAnswer.addPosition(postingPositionOne);
@@ -113,7 +114,8 @@ public class Indexer {
 	}
 
 	public static List<PositionalPosting> intersect(List<PositionalPosting> p1, List<PositionalPosting> p2) {
-		if (p1 == null || p2 == null) return null;
+		if (p1 == null || p2 == null)
+			return null;
 		List<PositionalPosting> result = new ArrayList<PositionalPosting>();
 		for (int i = 0, j = 0; i < p1.size() && j < p2.size();) {
 			int p1ID = p1.get(i).getDocId();
@@ -130,7 +132,7 @@ public class Indexer {
 		}
 		return result;
 	}
-	
+
 	public static List<PositionalPosting> union(List<PositionalPosting> p1, List<PositionalPosting> p2) {
 		List<PositionalPosting> result = new ArrayList<PositionalPosting>();
 		int p1Size = p1 == null ? 0 : p1.size();
@@ -159,7 +161,7 @@ public class Indexer {
 		while (j < p2Size) {
 			int p2ID = p2.get(j++).getDocId();
 			result.add(new PositionalPosting(p2ID));
-			
+
 		}
 		List<PositionalPosting> andResult = intersect(p1, p2);
 		int intersectSize = andResult == null ? 0 : andResult.size();
@@ -201,5 +203,5 @@ public class Indexer {
 	private boolean containsTerm(String term) {
 		return this.index.containsKey(term);
 	}
-	
+
 }
