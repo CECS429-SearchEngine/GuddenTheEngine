@@ -17,19 +17,18 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 /**
- * A Json Document Parser that can read JSON documents
- * and manipulate them.
+ * A Json Document Parser that can read JSON documents and manipulate them.
  */
 public class JsonDocumentParser {
 
-	/**The directory of the documents*/
+	/** The directory of the documents */
 	private String filePath;
-	/**The name of the file (document)*/
+	/** The name of the file (document) */
 	private String articlePath;
 
 	/**
-	 * Constructs a JsonDocumentParser with both filePath and articlePath
-	 * set to null.
+	 * Constructs a JsonDocumentParser with both filePath and articlePath set to
+	 * null.
 	 */
 	public JsonDocumentParser() {
 		this.filePath = null;
@@ -37,26 +36,30 @@ public class JsonDocumentParser {
 	}
 
 	/**
-	 * Constructs a JsonDocumentParser with the specified filePath
-	 * and articlePath
-	 * @param filePath The directory path.
-	 * @param articlePath The file name.
+	 * Constructs a JsonDocumentParser with the specified filePath and articlePath
+	 * 
+	 * @param filePath
+	 *            The directory path.
+	 * @param articlePath
+	 *            The file name.
 	 */
 	public JsonDocumentParser(String filePath, String articlePath) {
 		this.filePath = filePath;
 		this.articlePath = articlePath;
 	}
-	
+
 	/**
 	 * Separates documents within one large Json file.
-	 * @param root The root
-	 * @throws IOException 
+	 * 
+	 * @param root
+	 *            The root
+	 * @throws IOException
 	 */
 	public void separateDocuments(String root) throws IOException {
 		if (!pathsAreSet()) {
 			throw new NullPointerException("filePath and articlePath must be set.");
 		}
-		
+
 		JsonArray documents = parseToObject(createReader(new FileInputStream(this.filePath))).getAsJsonArray(root);
 		Gson gson = new Gson();
 		int counter = 0;
@@ -64,10 +67,11 @@ public class JsonDocumentParser {
 			createDocumentJson(counter++, e, gson);
 		}
 	}
-	
+
 	/**
-	 * Gets one document from the specified filePath with the specified
-	 * articlePath name.
+	 * Gets one document from the specified filePath with the specified articlePath
+	 * name.
+	 * 
 	 * @return A document object representing the Json document.
 	 * @throws IOException
 	 */
@@ -77,18 +81,22 @@ public class JsonDocumentParser {
 		Document doc = gson.fromJson(documents, Document.class);
 		return doc;
 	}
-	
+
 	/**
 	 * Sets the directory path.
-	 * @param filePath The directory path
+	 * 
+	 * @param filePath
+	 *            The directory path
 	 */
 	public void setFilePath(String filePath) {
 		this.filePath = filePath;
 	}
-	
+
 	/**
 	 * Sets the file name.
-	 * @param articlePath The file name
+	 * 
+	 * @param articlePath
+	 *            The file name
 	 */
 	public void setArticlePath(String articlePath) {
 		this.articlePath = articlePath;
@@ -96,27 +104,33 @@ public class JsonDocumentParser {
 
 	/**
 	 * Parses a JsonReader to a JsonObject.
-	 * @param reader The JsonReader
+	 * 
+	 * @param reader
+	 *            The JsonReader
 	 * @return A JsonObject
 	 */
 	private JsonObject parseToObject(JsonReader reader) {
 		JsonParser parser = new JsonParser();
 		return parser.parse(reader).getAsJsonObject();
 	}
-	
+
 	/**
 	 * Creates a JsonReader.
-	 * @param in The input stream
+	 * 
+	 * @param in
+	 *            The input stream
 	 * @return A JsonReader
 	 * @throws IOException
 	 */
 	private JsonReader createReader(InputStream in) throws IOException {
 		return new JsonReader(new InputStreamReader(in, "UTF-8"));
 	}
-	
+
 	/**
 	 * Creates a JsonWriter.
-	 * @param out The output stream
+	 * 
+	 * @param out
+	 *            The output stream
 	 * @return A JsonWriter
 	 * @throws IOException
 	 */
@@ -128,9 +142,13 @@ public class JsonDocumentParser {
 
 	/**
 	 * Creates a Json Document with the specified articlePath name.
-	 * @param n This document's number
-	 * @param e The Json element
-	 * @param gson The Gson object
+	 * 
+	 * @param n
+	 *            This document's number
+	 * @param e
+	 *            The Json element
+	 * @param gson
+	 *            The Gson object
 	 * @throws IOException
 	 */
 	private void createDocumentJson(int n, JsonElement e, Gson gson) throws IOException {
@@ -142,6 +160,7 @@ public class JsonDocumentParser {
 
 	/**
 	 * Checks to see if both paths (filePath and articlePath) are set.
+	 * 
 	 * @return True if both paths are not null.
 	 */
 	private boolean pathsAreSet() {

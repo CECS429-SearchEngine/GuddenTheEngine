@@ -20,7 +20,7 @@ public class KGramIndex {
 	/** All of the k-grams and their mappings to words that match it */
 	private HashMap<String, PriorityQueue<String>> index;
 	private Set<String> gramDictionary;
-	
+
 	public KGramIndex() {
 		this.index = new HashMap<String, PriorityQueue<String>>();
 		this.gramDictionary = new HashSet<String>();
@@ -30,10 +30,14 @@ public class KGramIndex {
 		if (!this.gramDictionary.contains(token)) {
 			String specialToken = encapsulateToken(token);
 			for (int k = 1; k <= 3; k++) {
-					addKGrams(k, specialToken);
-					this.gramDictionary.add(token);
+				addKGrams(k, specialToken);
+				this.gramDictionary.add(token);
 			}
 		}
+	}
+
+	public int size() {
+		return this.index.size();
 	}
 
 	public PriorityQueue<String> getPostings(String token) {

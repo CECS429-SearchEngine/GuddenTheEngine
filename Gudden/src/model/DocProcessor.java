@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
+
 /**
  * Class for processing documents to build tokens
  * 
@@ -21,56 +22,57 @@ import com.google.gson.stream.JsonReader;
  *
  */
 public class DocProcessor {
-	File file;
-	Scanner sc;
-	
+	private File file;
+	private Scanner sc;
+
 	public DocProcessor(File file) {
 		this.file = file;
-		sc = new Scanner(process().getBody());
+		this.sc = new Scanner(process().getBody());
 	}
-	
+
 	public DocProcessor(String token) {
-		sc = new Scanner(token);
+		this.sc = new Scanner(token);
 	}
-	
+
 	public boolean hasNextToken() {
 		return this.sc.hasNext();
 	}
-	
+
 	public List<String> nextToken() {
-		if (!hasNextToken()) return null;
+		if (!hasNextToken())
+			return null;
 		List<String> tokens = new ArrayList<String>();
-		populateTokens(sc.next(), tokens);	
+		populateTokens(sc.next(), tokens);
 		normalizeTokens(tokens);
 		return tokens;
 	}
-	
+
 	private Document getDocument(File file) {
 		Gson gson = new Gson();
 		JsonObject json = null;
-		
+
 		try {
 			json = parseToJsonObject(new FileInputStream(file));
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
-		
+
 		return gson.fromJson(json, Document.class);
 	}
-	
+
 	private JsonObject parseToJsonObject(InputStream in) throws IOException {
 		JsonParser parser = new JsonParser();
 		return parser.parse(new JsonReader(new InputStreamReader(in, "UTF-8"))).getAsJsonObject();
 	}
-	
+
 	private String normalizeToken(String token) {
 		token = Normalizer.trimNonAlphanumeric(token);
 		token = Normalizer.removeApostrophe(token);
 		token = Normalizer.stemToken(token);
 		return token.toLowerCase();
 	}
-	
+
 	private void populateTokens(String token, List<String> tokens) {
 		if (token.contains("-")) {
 			Set<String> tokenSet = Normalizer.splitHypenWords(token);
@@ -81,7 +83,7 @@ public class DocProcessor {
 			tokens.add(token);
 		}
 	}
-	
+
 	private void normalizeTokens(List<String> tokens) {
 		String normalizedToken;
 		for (int i = 0; i < tokens.size(); i++) {
@@ -92,7 +94,7 @@ public class DocProcessor {
 			}
 		}
 	}
-	
+
 	private Document process() {
 		Document doc = getDocument(this.file);
 		Scanner sc = new Scanner(doc.getBody());
